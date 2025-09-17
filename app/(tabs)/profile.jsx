@@ -36,6 +36,10 @@ export default function Profile() {
     router.replace("/login");
   };
 
+  // const handlepanchang =() => {
+  //  router.push("../screens/panchangScreen") 
+  // }
+
   const toggleBiometric = async () => {
     if (!biometricEnabled) {
       const compatible = await LocalAuthentication.hasHardwareAsync();
@@ -103,7 +107,10 @@ export default function Profile() {
         <View style={styles.row}>
           <Text style={styles.label}>Help & Support</Text>
         </View>
-      </View>
+        {/* <TouchableOpacity style={styles.row} onPress={handlepanchang}>
+          <Text style={styles.label}>Panchang</Text>
+        </TouchableOpacity> */}
+      </View>      
 
       {/* Fingerprint Toggle */}
       <View style={styles.toggleRow}>

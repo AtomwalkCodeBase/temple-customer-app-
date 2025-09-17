@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
+// import { StatusBar } from 'expo-status-bar';
+import { Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
@@ -9,7 +9,7 @@ export default function TabLayout() {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* Custom status bar */}
       <View style={styles.statusBarBackground} />
-      <StatusBar style="light" />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
       <Tabs
         screenOptions={{
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f2f6f9',
   },
   statusBarBackground: {
-    height: 40, // fallback for iOS, dynamic height can be added with useSafeAreaInsets
+    height: Platform.OS === "android" ? StatusBar.currentHeight : 44, // fallback for iOS, dynamic height can be added with useSafeAreaInsets
     backgroundColor: '#E88F14',
     width: '100%',
     position: 'absolute',
