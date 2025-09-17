@@ -22,16 +22,16 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // ⬅️ read params from router (e.g. /login?force=true)
   const { force } = useLocalSearchParams();
 
   useEffect(() => {
     (async () => {
-      if (force === "true") return; // ⬅️ skip redirect if forced new login
+      if (force === "true") return;
 
       const storedUser = await AsyncStorage.getItem("user");
       if (storedUser) {
         router.replace("/screens/choose-login"); 
+        
       }
     })();
   }, [force]);
@@ -59,10 +59,10 @@ export default function LoginScreen() {
 
       const result = await customerLogin(mobile, pin);
 
-      // ✅ Save user & PIN in AsyncStorage
-      await AsyncStorage.setItem("user", JSON.stringify(result));
+      await AsyncStorage.setItem("user", result?.token);
+      await AsyncStorage.setItem("ref_code", result?.cust_ref_code);
       await AsyncStorage.setItem("userPin", pin);
-      await AsyncStorage.setItem("biometric", "false"); // default false
+      await AsyncStorage.setItem("biometric", "false");
 
       router.replace('/(tabs)');
     } catch (error) {
@@ -79,16 +79,8 @@ export default function LoginScreen() {
       resizeMode="cover"
     >
       <SafeAreaView style={styles.container}>
-        {/* Back Button */}
-        <TouchableOpacity style={styles.back} onPress={() => router.back()}>
-          <View style={styles.backCircle}>
-            <Ionicons name="chevron-back" size={22} color="#fff" />
-          </View>
-        </TouchableOpacity>
-
-        {/* Center Box */}
         <View style={styles.centerContent}>
-          <BlurView intensity={10} tint="light" style={styles.glassBox}>
+          <BlurView intensity={50} tint="light" style={styles.glassBox}>
             <View style={styles.body}>
               <Text style={styles.title}>Welcome back!</Text>
               <Text style={styles.subtitle}>Continue your spiritual journey</Text>
@@ -170,15 +162,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   background: { flex: 1, width: '100%', height: '100%' },
   container: { flex: 1 },
-  back: { padding: 16, position: 'absolute', top: 10, left: 10, zIndex: 1 },
-  backCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   glassBox: {
     width: '88%',
     borderRadius: 24,
@@ -197,16 +180,17 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: 'center',
     fontFamily: 'PlayfairDisplay',
+    color: '#6B1E1E',
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#C25B3C',
     textAlign: 'center',
     marginBottom: 24,
   },
   pinWrap: { position: 'relative' },
   eye: { position: 'absolute', right: 14, top: 1, height: 52, justifyContent: 'center' },
-  forgot: { marginTop: 10, textAlign: 'center', color: '#6b7280' },
+  forgot: { marginTop: 10, textAlign: 'center', color: '#D8A34E' },
   errorText: {
     color: 'red',
     textAlign: 'center',
@@ -226,6 +210,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   primaryGradient: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  registerLine: { marginTop: 20, textAlign: 'center', color: '#6B7280' },
-  registerLink: { color: '#12a4a6', fontWeight: '700' },
+  registerLine: { marginTop: 20, textAlign: 'center', color: '#3E3E3E' },
+  registerLink: { color: '#d48817ff', fontWeight: '700' },
 });

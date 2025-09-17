@@ -1,5 +1,4 @@
 // app/register.jsx
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -57,15 +56,11 @@ export default function RegisterScreen() {
       style={styles.background}
       resizeMode="cover"
     >
+    
       <SafeAreaView style={styles.container}>
-        <TouchableOpacity style={styles.back} onPress={() => router.back()}>
-          <View style={styles.backCircle}>
-            <Ionicons name="chevron-back" size={22} color="#ffff" />
-          </View>
-        </TouchableOpacity>
 
         <View style={styles.centerContent}>
-          <BlurView intensity={10} tint="light" style={styles.glassBox}>
+          <BlurView intensity={50} tint="light" style={styles.glassBox}>
             <View style={styles.body}>
               {!pin ? (
                 <>
@@ -171,15 +166,6 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   background: { flex: 1, width: '100%', height: '100%' },
   container: { flex: 1 },
-  back: { padding: 16, position: 'absolute', top: 10, left: 10, zIndex: 1 },
-  backCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   glassBox: {
     width: '88%',
     borderRadius: 24,
@@ -198,10 +184,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: 'center',
     fontFamily: 'PlayfairDisplay',
+    color: '#6B1E1E',
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#C25B3C',
     textAlign: 'center',
     fontWeight: '400',
     lineHeight: 24,
@@ -232,8 +219,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  registerLine: { marginTop: 20, textAlign: 'center', color: '#6B7280' },
-  registerLink: { color: '#12a4a6', fontWeight: '700' },
+  registerLine: { marginTop: 20, textAlign: 'center', color: '#3E3E3E' },
+  registerLink: { color: '#d48817ff', fontWeight: '700' },
   pinContainer: { alignItems: 'center', marginTop: 20 },
   pinText: { fontSize: 16, color: '#6B7280', marginBottom: 10 },
   pinValue: { fontSize: 28, fontWeight: '700', color: '#12a4a6' },

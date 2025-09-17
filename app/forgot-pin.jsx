@@ -45,14 +45,8 @@ export default function ForgotPinScreen() {
       resizeMode="cover"
     >
       <SafeAreaView style={styles.container}>
-        <TouchableOpacity style={styles.back} onPress={() => router.back()}>
-          <View style={styles.backCircle}>
-            <Ionicons name="chevron-back" size={22} color="#ffff" />
-          </View>
-        </TouchableOpacity>
-
         <View style={styles.centerContent}>
-          <BlurView intensity={10} tint="light" style={styles.glassBox}>
+          <BlurView intensity={50} tint="light" style={styles.glassBox}>
             <View style={styles.body}>
               <Text style={styles.title}>Reset PIN</Text>
               <Text style={styles.subtitle}>Get a new PIN via email</Text>
@@ -116,15 +110,6 @@ export default function ForgotPinScreen() {
 const styles = StyleSheet.create({
   background: { flex: 1, width: '100%', height: '100%' },
   container: { flex: 1 },
-  back: { padding: 16, position: 'absolute', top: 10, left: 10, zIndex: 1 },
-  backCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   glassBox: {
     width: '90%',
     borderRadius: 24,
@@ -143,10 +128,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: 'center',
     fontFamily: 'PlayfairDisplay',
+    color: '#6B1E1E',
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#C25B3C',
     textAlign: 'center',
     fontWeight: '400',
     lineHeight: 24,

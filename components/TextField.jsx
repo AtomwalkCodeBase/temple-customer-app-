@@ -1,12 +1,11 @@
 // components/TextField.jsx
-import React from 'react';
-import { TextInput, View, StyleSheet } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 export default function TextField(props) {
   return (
     <View style={styles.wrap}>
       <TextInput
-        placeholderTextColor="#9aa0a6"
+        placeholderTextColor="#A68F7A"
         style={styles.input}
         autoCapitalize="none"
         {...props}

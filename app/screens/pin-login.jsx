@@ -75,7 +75,7 @@ export default function PinLogin() {
     >
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContent}>
-          <BlurView intensity={10} tint="light" style={styles.glassBox}>
+          <BlurView intensity={50} tint="light" style={styles.glassBox}>
             <View style={styles.body}>
               <Text style={styles.title}>Enter Your PIN</Text>
 

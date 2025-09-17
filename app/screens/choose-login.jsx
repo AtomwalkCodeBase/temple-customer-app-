@@ -39,8 +39,9 @@ export default function ChooseLogin() {
     }
   };
 
-  const handleNewUserLogin = () => {
+  const handleNewUserLogin = async () => {
     router.replace("/login?force=true");
+    await AsyncStorage.clear();
   };
 
   return (
@@ -52,7 +53,7 @@ export default function ChooseLogin() {
       <SafeAreaView style={styles.container}>
 
         <View style={styles.centerContent}>
-          <BlurView intensity={10} tint="light" style={styles.glassBox}>
+          <BlurView intensity={50} tint="light" style={styles.glassBox}>
             <View style={styles.body}>
               <Text style={styles.title}>Welcome back!</Text>
               <Text style={styles.subtitle}>Continue your spiritual journey</Text>
@@ -130,10 +131,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "center",
     fontFamily: "PlayfairDisplay",
+    color: "#6B1E1E",
   },
   subtitle: {
     fontSize: 16,
-    color: "#6B7280",
+    color: "#C25B3C",
     textAlign: "center",
     fontWeight: "400",
     lineHeight: 24,
@@ -165,5 +167,5 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   registerLine: { marginTop: 20, textAlign: "center", color: "#6B7280" },
-  registerLink: { color: "#12a4a6", fontWeight: "700" },
+  registerLink: { color: "#d48817ff", fontWeight: "700" },
 });

@@ -3,28 +3,26 @@ import * as LocalAuthentication from "expo-local-authentication";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-  Alert,
   Image,
-  SafeAreaView,
   StyleSheet,
   Switch,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const user_ref=AsyncStorage.getItem("ref_code");
 
-  // Load user & biometric setting whenever screen is focused
   useFocusEffect(
     useCallback(() => {
       (async () => {
         const storedUser = await AsyncStorage.getItem("user");
         const storedBio = await AsyncStorage.getItem("biometric");
 
-        if (storedUser) setUser(JSON.parse(storedUser));
+        if (storedUser) setUser(storedUser);
         setBiometricEnabled(storedBio === "true");
       })();
     }, [])
@@ -44,10 +42,7 @@ export default function Profile() {
       const enrolled = await LocalAuthentication.isEnrolledAsync();
 
       if (!compatible || !enrolled) {
-        Alert.alert(
-          "Biometric not available",
-          "Your device does not support biometrics."
-        );
+        alert("Your device does not support biometrics.");
         return;
       }
 
@@ -59,10 +54,7 @@ export default function Profile() {
         await AsyncStorage.setItem("biometric", "true");
         setBiometricEnabled(true);
       } else {
-        Alert.alert(
-          "Authentication failed",
-          "Could not enable fingerprint login."
-        );
+        alert("Could not enable fingerprint login.");
       }
     } else {
       await AsyncStorage.setItem("biometric", "false");
@@ -76,22 +68,28 @@ export default function Profile() {
 
   if (!user) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <Text>Loading profile...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      {/* Top Header */}
+      <View style={styles.topHeader}>
+        <Text style={styles.headerTitle}>User Profile</Text>
+        <View style={styles.headerLine} />
+      </View>
+
       {/* Profile Header */}
-      <View style={styles.header}>
+      <View style={styles.profileHeader}>
         <Image
           source={{ uri: "https://i.pravatar.cc/150?img=12" }}
           style={styles.avatar}
         />
         <Text style={styles.name}>Vishnuvardhan</Text>
-        <Text style={styles.subtext}>{user.cust_ref_code}</Text>
+        <Text style={styles.subtext}>{user_ref}</Text>
       </View>
 
       {/* Details Section */}
@@ -127,16 +125,41 @@ export default function Profile() {
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f2f6f9", alignItems: "center" },
-  header: {
+  container: {
+    flex: 1,
+    backgroundColor: "#f2f6f9",
+    alignItems: "center",
+  },
+
+  // Top Header
+  topHeader: {
+    width: "100%",
+    backgroundColor: "#E88F14",
+    paddingVertical: 15,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#fff",
+  },
+  headerLine: {
+    height: 2,
+    width: "80%",
+    backgroundColor: "#fff",
+    marginTop: 5,
+    borderRadius: 1,
+  },
+
+  profileHeader: {
     backgroundColor: "#E88F14",
     width: "100%",
-    paddingTop: 40, // safe area top padding
     paddingBottom: 30,
     alignItems: "center",
     borderBottomLeftRadius: 30,
@@ -148,9 +171,11 @@ const styles = StyleSheet.create({
     borderRadius: 45,
     borderWidth: 3,
     borderColor: "#fff",
+    marginTop: 10,
   },
   name: { fontSize: 20, fontWeight: "700", color: "#fff", marginTop: 10 },
   subtext: { color: "#cce7ea", fontSize: 14 },
+
   card: {
     backgroundColor: "#fff",
     marginTop: 20,
@@ -171,6 +196,7 @@ const styles = StyleSheet.create({
     borderColor: "#eee",
   },
   label: { fontSize: 16, color: "#555" },
+
   toggleRow: {
     marginTop: 20,
     width: "90%",
@@ -179,6 +205,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   toggleText: { fontSize: 16, color: "#333", fontWeight: "600" },
+
   pinBtn: {
     marginTop: 20,
     backgroundColor: "#4d88ff",
@@ -187,6 +214,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   pinText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+
   logoutBtn: {
     marginTop: "auto",
     marginBottom: 30,
