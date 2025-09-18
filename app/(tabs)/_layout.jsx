@@ -1,20 +1,20 @@
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Tabs } from 'expo-router';
-// import { StatusBar } from 'expo-status-bar';
 import { Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      {/* Custom status bar */}
       <View style={styles.statusBarBackground} />
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: '#121417',
+          tabBarActiveTintColor: '#e88f14',
         }}
       >
         <Tabs.Screen
@@ -22,7 +22,7 @@ export default function TabLayout() {
           options={{
             title: 'Dashboard',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="grid-outline" color={color} size={size} />
+              <Ionicons name="home" color={color} size={size} />
             ),
           }}
         />
@@ -31,25 +31,25 @@ export default function TabLayout() {
           options={{
             title: 'Temples',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="business-outline" color={color} size={size} />
+              <MaterialIcons name="temple-hindu" color={color} size={size} />
             ),
           }}
         />
-        <Tabs.Screen
+        {/* <Tabs.Screen
           name="my-booking"
           options={{
             title: 'My Bookings',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="calendar-outline" color={color} size={size} />
+              <FontAwesome5 name="calendar-check" color={color} size={size} />
             ),
           }}
-        />
+        /> */}
         <Tabs.Screen
-          name="Events"
+          name="events"
           options={{
             title: 'Events',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="calendar-outline" color={color} size={size} />
+              <MaterialIcons name="event" color={color} size={size} />
             ),
           }}
         />
@@ -58,7 +58,7 @@ export default function TabLayout() {
           options={{
             title: 'Profile',
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person-outline" color={color} size={size} />
+              <Ionicons name="person" color={color} size={size} />
             ),
           }}
         />

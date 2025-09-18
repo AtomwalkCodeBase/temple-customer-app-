@@ -1,4 +1,3 @@
-// app/screens/pin-login.jsx
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
@@ -38,7 +37,7 @@ export default function PinLogin() {
 
       if (!savedPin) {
         setError("No PIN found. Please log in again.");
-        router.replace("/screens/choose-login");
+        router.replace("/screens/");
         return;
       }
 
@@ -115,7 +114,7 @@ export default function PinLogin() {
               <Text style={styles.registerLine}>
                 <Text
                   style={styles.registerLink}
-                  onPress={() => router.replace("/screens/choose-login")}
+                  onPress={() => router.replace("/screens/Login")}
                 >
                   ← Back to Login Options
                 </Text>

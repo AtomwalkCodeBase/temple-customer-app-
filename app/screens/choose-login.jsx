@@ -25,7 +25,7 @@ export default function ChooseLogin() {
   }, []);
 
   const handlePinLogin = () => {
-    router.replace("/screens/pin-login");
+    router.replace("/screens/Pin-login");
   };
 
   const handleBiometricLogin = async () => {
@@ -40,7 +40,7 @@ export default function ChooseLogin() {
   };
 
   const handleNewUserLogin = async () => {
-    router.replace("/login?force=true");
+    router.replace("/screens/Login?force=true");
     await AsyncStorage.clear();
   };
 

@@ -31,7 +31,7 @@ export default function Index() {
         const user = await AsyncStorage.getItem("user");
         if (user) {
           // ✅ Already logged in → go directly to choose-login
-          router.replace("/screens/choose-login");
+          router.replace("/screens/Choose-login");
           return;
         }
       } catch (e) {
@@ -106,7 +106,7 @@ export default function Index() {
               {/* Login Button */}
               <TouchableOpacity
                 style={styles.primaryBtn}
-                onPress={() => router.push("/login")}
+                onPress={() => router.push("/screens/Login")}
                 activeOpacity={0.8}
               >
                 <LinearGradient
@@ -127,7 +127,7 @@ export default function Index() {
               >
                 <TouchableOpacity
                   style={styles.outlineBtnInner}
-                  onPress={() => router.push("/register")}
+                  onPress={() => router.push("/screens/Register")}
                   activeOpacity={0.7}
                 >
                   <Text style={styles.outlineText}>Create Account</Text>

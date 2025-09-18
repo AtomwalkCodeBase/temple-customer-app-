@@ -12,6 +12,7 @@ export function getTempleServiceList() {
 }
 
 export function processBooking(bookingData) {
+    console.log(bookingData, "bookingData")
     const data = {}
     data["booking_data"] = bookingData
     return authAxiosPost(process_booking_data, data);

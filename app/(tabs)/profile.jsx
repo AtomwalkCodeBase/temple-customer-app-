@@ -33,12 +33,8 @@ export default function Profile() {
     await AsyncStorage.removeItem("biometric");
     await AsyncStorage.removeItem("userPin");
     await AsyncStorage.clear();
-    router.replace("/login");
+    router.replace("/screens/login");
   };
-
-  // const handlepanchang =() => {
-  //  router.push("../screens/panchangScreen") 
-  // }
 
   const toggleBiometric = async () => {
     if (!biometricEnabled) {
@@ -64,6 +60,10 @@ export default function Profile() {
       await AsyncStorage.setItem("biometric", "false");
       setBiometricEnabled(false);
     }
+  };
+
+  const handleMybookings = async () => {
+    router.push("/screens/MyBookings");
   };
 
   const handleSetPin = async () => {
@@ -101,6 +101,12 @@ export default function Profile() {
         <View style={styles.row}>
           <Text style={styles.label}>Profile Settings</Text>
         </View>
+        <TouchableOpacity
+          style={styles.row}
+          onPress={handleMybookings}
+        >
+          <Text style={styles.label}>My Bookings</Text>
+        </TouchableOpacity>
         <View style={styles.row}>
           <Text style={styles.label}>Account Settings</Text>
         </View>
