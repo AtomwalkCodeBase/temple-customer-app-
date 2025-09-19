@@ -1,4 +1,3 @@
-// app/(tabs)/Events.jsx
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -301,13 +300,11 @@ const Events = () => {
     <Screen>
       <Header>
         <Row>
-          {/* Left Column: Title + Subtitle */}
           <TitleSubtitle>
             <Title>🗓️ Temple Events</Title>
             <Subtitle>Discover special events and celebrations</Subtitle>
           </TitleSubtitle>
 
-          {/* Right Column: Search Icon */}
           <SearchButton onPress={toggleSearch}>
             <Ionicons 
               name={searchVisible ? "close" : "search"} 
@@ -317,7 +314,6 @@ const Events = () => {
           </SearchButton>
         </Row>
 
-        {/* Search bar appears below row when active */}
         {searchVisible && (
           <SearchContainer>
             <SearchInput
@@ -348,7 +344,6 @@ const Events = () => {
         ListEmptyComponent={<EmptyState />}
       />
 
-      {/* Package Selection Modal */}
       <Modal
         visible={modalVisible}
         animationType="slide"

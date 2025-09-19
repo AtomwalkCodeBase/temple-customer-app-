@@ -379,10 +379,18 @@ const formatAPIDateToISO = (apiDate) => {
         renderItem={({ item }) => <ServiceCard service={item} />}
         keyExtractor={(item) => item.service_id}
         contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
+        // refreshControl={
+        //   <RefreshControl 
+        //     refreshing={refreshing} 
+        //     onRefresh={onRefresh}
+        //     colors={['#E88F14']}
+        //     tintColor={'#E88F14'}
+        //   />
+        // }
         showsVerticalScrollIndicator={false}
+        // ListEmptyComponent={<EmptyState />}
       />
 
-      {/* Package Selection Modal */}
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -450,22 +458,22 @@ const formatAPIDateToISO = (apiDate) => {
             ) : (
               <>
                 <Calendar
-  minDate={new Date().toISOString().split('T')[0]}
-  onDayPress={handleDateSelect}
-  markedDates={{
-    ...markedDates,
-    ...(selectedDate && !markedDates[selectedDate] ? {
-      [selectedDate]: { selected: true, selectedColor: '#E88F14' }
-    } : {})
-  }}
-  theme={{
-    selectedDayBackgroundColor: '#E88F14',
-    todayTextColor: '#E88F14',
-    arrowColor: '#E88F14',
-    textDisabledColor: '#CCC',
-  }}
-  style={calendarStyles.calendar}
-/>
+                  minDate={new Date().toISOString().split('T')[0]}
+                  onDayPress={handleDateSelect}
+                  markedDates={{
+                    ...markedDates,
+                    ...(selectedDate && !markedDates[selectedDate] ? {
+                      [selectedDate]: { selected: true, selectedColor: '#E88F14' }
+                    } : {})
+                  }}
+                  theme={{
+                    selectedDayBackgroundColor: '#E88F14',
+                    todayTextColor: '#E88F14',
+                    arrowColor: '#E88F14',
+                    textDisabledColor: '#CCC',
+                  }}
+                  style={calendarStyles.calendar}
+                />
 
 
                 <BookingSummary>
@@ -525,6 +533,7 @@ const SearchButton = styled.TouchableOpacity`
   background-color: rgba(255, 255, 255, 0.2);
   align-items: center;
   justify-content: center;
+  margin-top: 10px;
 `;
 
 const SearchContainer = styled.View`
