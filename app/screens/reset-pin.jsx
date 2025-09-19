@@ -2,16 +2,17 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-    Alert,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { customerSetPin } from "../../services/authService";
 
 export default function ResetPin() {
+  //
   const [oldPin, setOldPin] = useState("");
   const [newPin, setNewPin] = useState("");
 

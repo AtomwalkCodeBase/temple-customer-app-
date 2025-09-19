@@ -110,7 +110,7 @@ export default function PinLogin() {
                 </LinearGradient>
               </TouchableOpacity>
 
-              {/* 🔹 Back to Login Options */}
+  
               <Text style={styles.registerLine}>
                 <Text
                   style={styles.registerLink}

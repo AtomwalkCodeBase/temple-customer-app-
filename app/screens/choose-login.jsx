@@ -43,6 +43,7 @@ export default function ChooseLogin() {
     router.replace("/screens/Login?force=true");
     await AsyncStorage.clear();
   };
+  //
 
   return (
     <ImageBackground
