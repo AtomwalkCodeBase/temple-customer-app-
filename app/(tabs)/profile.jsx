@@ -33,7 +33,7 @@ export default function Profile() {
     await AsyncStorage.removeItem("biometric");
     await AsyncStorage.removeItem("userPin");
     await AsyncStorage.clear();
-    router.replace("/screens/login");
+    router.replace("/screens/Login");
   };
 
   const toggleBiometric = async () => {
@@ -62,12 +62,16 @@ export default function Profile() {
     }
   };
 
+    const handlePanchang = async () => {
+    router.push("/PanchangScreen");
+  };
+
   const handleMybookings = async () => {
     router.push("/screens/MyBookings");
   };
 
   const handleSetPin = async () => {
-    router.push("../screens/reset-pin");
+    router.push("../screens/Reset-pin");
   };
 
   if (!user) {
@@ -113,9 +117,9 @@ export default function Profile() {
         <View style={styles.row}>
           <Text style={styles.label}>Help & Support</Text>
         </View>
-        {/* <TouchableOpacity style={styles.row} onPress={handlepanchang}>
+        <TouchableOpacity style={styles.row} onPress={handlePanchang}>
           <Text style={styles.label}>Panchang</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
       </View>      
 
       {/* Fingerprint Toggle */}
