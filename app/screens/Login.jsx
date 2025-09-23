@@ -1,7 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams, usePathname } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -12,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import MainButton from '../../components/MainButton';
 import TextField from '../../components/TextField';
 import { customerLogin } from '../../services/authService';
 
@@ -64,6 +64,7 @@ useEffect(() => {
       await AsyncStorage.setItem("ref_code", result?.cust_ref_code);
       await AsyncStorage.setItem("userPin", pin);
       await AsyncStorage.setItem("biometric", "false");
+      await AsyncStorage.setItem("customer_id",String(result?.customer_id)); 
 
       router.replace('/(tabs)');
     } catch (error) {
@@ -125,23 +126,10 @@ useEffect(() => {
                 <Text style={styles.forgot}>Forgot PIN?</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.primaryBtn}
+              <MainButton
+                title="Login"
                 onPress={handleLogin}
-                disabled={loading}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#eacc0cff', '#dc6326ff']}
-                  style={styles.primaryGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Text style={styles.primaryText}>
-                    {loading ? 'Logging in...' : 'Login'}
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
+              />
               <Text style={styles.registerLine}>
                 Don’t have an account?{' '}
                 <Text

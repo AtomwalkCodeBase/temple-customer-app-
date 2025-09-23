@@ -1,4 +1,3 @@
-// app/forgot-pin.jsx
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -84,7 +83,7 @@ export default function ForgotPinScreen() {
 
                   <TouchableOpacity
                     style={styles.primaryBtn}
-                    onPress={() => router.replace('/login')}
+                    onPress={() => router.replace('/screens/Login')}
                     activeOpacity={0.8}
                   >
                     <LinearGradient

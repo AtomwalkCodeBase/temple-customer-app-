@@ -1,9 +1,9 @@
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Tabs } from 'expo-router';
 import { Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ToastMsg from '../../components/ToastMsg';
 
 export default function TabLayout() {
   return (
@@ -27,6 +27,15 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
+          name="events"
+          options={{
+            title: 'Services',
+            tabBarIcon: ({ color, size }) => (
+              <MaterialIcons name="event" color={color} size={size} />
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="temples"
           options={{
             title: 'Temples',
@@ -44,15 +53,7 @@ export default function TabLayout() {
             ),
           }}
         /> */}
-        <Tabs.Screen
-          name="events"
-          options={{
-            title: 'Events',
-            tabBarIcon: ({ color, size }) => (
-              <MaterialIcons name="event" color={color} size={size} />
-            ),
-          }}
-        />
+        
         <Tabs.Screen
           name="profile"
           options={{
@@ -63,6 +64,7 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
+      <ToastMsg/>
     </SafeAreaView>
   );
 }
@@ -73,7 +75,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f2f6f9',
   },
   statusBarBackground: {
-    height: Platform.OS === "android" ? StatusBar.currentHeight : 44, // fallback for iOS, dynamic height can be added with useSafeAreaInsets
+    height: Platform.OS === "android" ? StatusBar.currentHeight : 44,
     backgroundColor: '#E88F14',
     width: '100%',
     position: 'absolute',

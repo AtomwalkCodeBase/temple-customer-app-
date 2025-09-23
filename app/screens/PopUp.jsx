@@ -1,18 +1,15 @@
-import React from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Modal from "react-native-modal";
-import { Ionicons } from "@expo/vector-icons";
 
 export default function PopUp({ isVisible, onYes, onNo, message }) {
   return (
     <Modal isVisible={isVisible} animationIn="zoomIn" animationOut="zoomOut">
       <View style={styles.popupContainer}>
-        {/* Close Icon */}
         <TouchableOpacity style={styles.closeButton} onPress={onNo}>
           <Ionicons name="close" size={24} color="#333" />
         </TouchableOpacity>
 
-        {/* Fingerprint Icon */}
         <Ionicons
           name="finger-print"
           size={60}

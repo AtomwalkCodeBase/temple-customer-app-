@@ -1,86 +1,249 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-  Alert,
+  ImageBackground,
+  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
-import { customerSetPin } from "../../services/authService";
+import ToastMsg from "../../components/ToastMsg";
+import { customerSetPin } from "../../services/productService";
 
 export default function ResetPin() {
-  //
   const [oldPin, setOldPin] = useState("");
   const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSetPin = async () => {
+   const userData = await AsyncStorage.getItem("customer_id");
+    // Validate inputs
+    if (!oldPin || !newPin || !confirmPin) {
+      setError("Please fill all fields");
+      return;
+    }
+    if (newPin !== confirmPin) {
+      setError("New PIN and Confirm PIN do not match");
+      return;
+    }
+    if (newPin == oldPin) {
+      setError("Old PIN and New PIN cannot be same");
+      return;
+    }
     try {
-      const userData = await AsyncStorage.getItem("user");
-      if (!userData) {
-        Alert.alert("Error", "User not logged in");
-        return;
-      }
-
-      const user = JSON.parse(userData);
-      const res = await customerSetPin(user.customer_id, oldPin, newPin);
-
-      if (res?.status === "success") {
-        Alert.alert("Success", "PIN updated successfully");
-        await AsyncStorage.setItem("userPin", newPin); // Save new PIN locally
+      setLoading(true);
+      setError("");
+      const res = await customerSetPin(parseInt(userData,10), oldPin, newPin);
+      if (res?.status === 200) {
+        ToastMsg('PIN updated successfully', 'success');
+        await AsyncStorage.setItem("userPin", newPin);
         router.back();
       } else {
-        Alert.alert("Failed", res?.message || "Could not update PIN");
+        setError(res?.message || "Could not update PIN");
       }
     } catch (err) {
-      Alert.alert("Error", err.message);
+      setError(err.message || "An error occurred");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Set / Update PIN</Text>
+    <ImageBackground
+      source={require("../../assets/images/omBG.png")}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centerContent}>
+          <BlurView intensity={50} tint="light" style={styles.glassBox}>
+            <View style={styles.body}>
+              <Text style={styles.title}>Set / Update PIN</Text>
+              <Text style={styles.subtitle}>
+                Secure your account with a new PIN
+              </Text>
 
-      <TextInput
-        placeholder="Enter Old PIN"
-        secureTextEntry
-        style={styles.input}
-        value={oldPin}
-        onChangeText={setOldPin}
-      />
+              <View style={styles.inputContainer}>
+                <TextInput
+                  placeholder="Enter Old PIN"
+                  placeholderTextColor="#6b7280"
+                  secureTextEntry
+                  style={styles.input}
+                  value={oldPin}
+                  onChangeText={(text) => {
+                    setOldPin(text);
+                    if (error) setError("");
+                  }}
+                  keyboardType="numeric"
+                  maxLength={6}
+                />
+              </View>
 
-      <TextInput
-        placeholder="Enter New PIN"
-        secureTextEntry
-        style={styles.input}
-        value={newPin}
-        onChangeText={setNewPin}
-      />
+              <View style={styles.inputContainer}>
+                <TextInput
+                  placeholder="Enter New PIN"
+                  placeholderTextColor="#6b7280"
+                  secureTextEntry
+                  style={styles.input}
+                  value={newPin}
+                  onChangeText={(text) => {
+                    setNewPin(text);
+                    if (error) setError("");
+                  }}
+                  keyboardType="numeric"
+                  maxLength={6}
+                />
+              </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleSetPin}>
-        <Text style={styles.buttonText}>Update PIN</Text>
-      </TouchableOpacity>
-    </View>
+              {/* ✅ Confirm PIN */}
+              <View style={styles.inputContainer}>
+                <TextInput
+                  placeholder="Confirm New PIN"
+                  placeholderTextColor="#6b7280"
+                  secureTextEntry
+                  style={styles.input}
+                  value={confirmPin}
+                  onChangeText={(text) => {
+                    setConfirmPin(text);
+                    if (error) setError("");
+                  }}
+                  keyboardType="numeric"
+                  maxLength={6}
+                />
+              </View>
+
+              {/* Error message */}
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+              <TouchableOpacity
+                style={styles.primaryBtn}
+                onPress={handleSetPin}
+                disabled={loading}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={["#eacc0cff", "#dc6326ff"]}
+                  style={styles.primaryGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Text style={styles.primaryText}>
+                    {loading ? "Updating..." : "Update PIN"}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={styles.backButton}
+              >
+                <Text style={styles.backText}>Go Back</Text>
+              </TouchableOpacity>
+            </View>
+          </BlurView>
+        </View>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 20 },
-  title: { fontSize: 20, fontWeight: "bold", textAlign: "center", marginBottom: 20 },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
+  background: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
   },
-  button: {
-    backgroundColor: "#4d88ff",
-    paddingVertical: 14,
-    borderRadius: 8,
+  container: {
+    flex: 1,
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
   },
-  buttonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  glassBox: {
+    width: "88%",
+    borderRadius: 24,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    borderWidth: 1,
+    borderColor: "#eacc0cb3",
+    overflow: "hidden",
+  },
+  body: {
+    width: "100%",
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: "1000",
+    marginBottom: 10,
+    textAlign: "center",
+    fontFamily: "PlayfairDisplay",
+    color: "#6B1E1E",
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#C25B3C",
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  inputContainer: {
+    marginBottom: 15,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#eacc0cff",
+    borderRadius: 16,
+    padding: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    fontSize: 16,
+    color: "#333",
+  },
+  errorText: {
+    color: "red",
+    textAlign: "center",
+    marginTop: 8,
+    marginBottom: 8,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  primaryBtn: {
+    marginTop: 18,
+    borderRadius: 16,
+    height: 56,
+    overflow: "hidden",
+    elevation: 3,
+    shadowColor: "#121417",
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+  primaryGradient: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  primaryText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  backButton: {
+    marginTop: 15,
+    padding: 12,
+    alignItems: "center",
+  },
+  backText: {
+    color: "#D8A34E",
+    fontSize: 16,
+    fontWeight: "600",
+  },
 });

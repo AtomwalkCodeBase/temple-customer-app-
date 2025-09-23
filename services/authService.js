@@ -71,7 +71,7 @@ export async function customerRegister(name, mobile_number, email_id, alternate_
 export async function customerSetPin(u_id, o_pin, n_pin) {
     try {
         const response = await fetch(
-            "https://temple.atomwalk.com/customer/api/set_pin/",
+            "https://temple.atomwalk.com/customer/api/customer_set_pin/",
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -79,12 +79,16 @@ export async function customerSetPin(u_id, o_pin, n_pin) {
             }
         );
 
-        if (!response.ok) {
-            throw new Error("Failed to update PIN");
-        }
+        const text = await response.text();
+        console.log("API Response:", text);
 
-        return await response.json(); // Expected: success/failure message
+        try {
+            return JSON.parse(text);
+        } catch {
+            return { status: "error", message: text }; // fallback if not JSON
+        }
     } catch (error) {
         throw error;
     }
 }
+

@@ -1,4 +1,4 @@
-import { get_booking_list, process_booking_data, temple_list, temple_services_list } from "./constantService";
+import { customer_set_pin, get_booking_list, process_booking_data, temple_list, temple_services_list } from "./constantService";
 import { authAxios, authAxiosPost } from "./HttpMethod";
 
 
@@ -28,4 +28,13 @@ export function getBookingList(refcode) {
 export function cancelBooking(cancelData) {
     const data = { booking_data: cancelData };
     return authAxiosPost(process_booking_data, data);
+}
+
+export function customerSetPin(u_id, o_pin, n_pin) {
+    const data = {
+        u_id,
+        o_pin,
+        n_pin,
+    };
+    return authAxiosPost(customer_set_pin, data);
 }

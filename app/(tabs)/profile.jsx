@@ -4,25 +4,28 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   Image,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
-  const user_ref=AsyncStorage.getItem("ref_code");
+  const [userRef, setUserRef] = useState("");
 
   useFocusEffect(
     useCallback(() => {
       (async () => {
         const storedUser = await AsyncStorage.getItem("user");
         const storedBio = await AsyncStorage.getItem("biometric");
+        const storedRef = await AsyncStorage.getItem("ref_code");
 
         if (storedUser) setUser(storedUser);
+        if (storedRef) setUserRef(storedRef);
         setBiometricEnabled(storedBio === "true");
       })();
     }, [])
@@ -83,73 +86,81 @@ export default function Profile() {
   }
 
   return (
-    <View style={styles.container}>
-      {/* Top Header */}
-      <View style={styles.topHeader}>
-        <Text style={styles.headerTitle}>User Profile</Text>
-        <View style={styles.headerLine} />
-      </View>
-
-      {/* Profile Header */}
-      <View style={styles.profileHeader}>
-        <Image
-          source={{ uri: "https://i.pravatar.cc/150?img=12" }}
-          style={styles.avatar}
-        />
-        <Text style={styles.name}>Vishnuvardhan</Text>
-        <Text style={styles.subtext}>{user_ref}</Text>
-      </View>
-
-      {/* Details Section */}
-      <View style={styles.card}>
-        <View style={styles.row}>
-          <Text style={styles.label}>Profile Settings</Text>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.container}>
+        {/* Top Header */}
+        <View style={styles.topHeader}>
+          <Text style={styles.headerTitle}>User Profile</Text>
+          <View style={styles.headerLine} />
         </View>
+
+        {/* Profile Header */}
+        <View style={styles.profileHeader}>
+          <Image
+            source={{ uri: "https://i.pravatar.cc/150?img=12" }}
+            style={styles.avatar}
+          />
+          <Text style={styles.name}>Vishnuvardhan</Text>
+          <Text style={styles.subtext}>{userRef}</Text>
+        </View>
+
+        {/* Details Section */}
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <Text style={styles.label}>Profile Settings</Text>
+          </View>
         <TouchableOpacity
           style={styles.row}
           onPress={handleMybookings}
         >
-          <Text style={styles.label}>My Bookings</Text>
-        </TouchableOpacity>
-        <View style={styles.row}>
-          <Text style={styles.label}>Account Settings</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Help & Support</Text>
-        </View>
-        <TouchableOpacity style={styles.row} onPress={handlePanchang}>
+            <Text style={styles.label}>My Bookings</Text>
+          </TouchableOpacity>
+          <View style={styles.row}>
+            <Text style={styles.label}>Account Settings</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Help & Support</Text>
+          </View>
+        {/* <TouchableOpacity style={styles.row} onPress={handlePanchang}>
           <Text style={styles.label}>Panchang</Text>
+        </TouchableOpacity> */}
+        </View>
+
+        {/* Fingerprint Toggle */}
+        <View style={styles.toggleRow}>
+          <Text style={styles.toggleText}>Fingerprint Login</Text>
+          <Switch
+            value={biometricEnabled}
+            onValueChange={toggleBiometric}
+            trackColor={{ false: "#ccc", true: "#e8901496" }}
+            thumbColor={biometricEnabled ? "#E88F14" : "#f4f3f4"}
+          />
+        </View>
+
+        {/* Set/Update Pin */}
+        <TouchableOpacity style={styles.pinBtn} onPress={handleSetPin}>
+          <Text style={styles.pinText}>Update PIN</Text>
         </TouchableOpacity>
-      </View>      
 
-      {/* Fingerprint Toggle */}
-      <View style={styles.toggleRow}>
-        <Text style={styles.toggleText}>Fingerprint Login</Text>
-        <Switch
-          value={biometricEnabled}
-          onValueChange={toggleBiometric}
-          trackColor={{ false: "#ccc", true: "#e8901496" }}
-          thumbColor={biometricEnabled ? "#E88F14" : "#f4f3f4"}
-        />
+        {/* Logout Button */}
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
       </View>
-
-      {/* Set/Update Pin */}
-      <TouchableOpacity style={styles.pinBtn} onPress={handleSetPin}>
-        <Text style={styles.pinText}>Update PIN</Text>
-      </TouchableOpacity>
-
-      {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+    alignItems: "center",
+    justifyContent: "flex-start",
+    backgroundColor: "#f2f6f9",
+  },
   container: {
     flex: 1,
-    backgroundColor: "#f2f6f9",
+    width: "100%",
     alignItems: "center",
   },
 
@@ -233,7 +244,7 @@ const styles = StyleSheet.create({
   pinText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 
   logoutBtn: {
-    marginTop: "auto",
+    marginTop: 30,
     marginBottom: 30,
     backgroundColor: "#dc2626",
     paddingVertical: 14,

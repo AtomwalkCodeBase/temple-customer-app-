@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import styled from 'styled-components/native';
-import BackNav from '../../components/BackNav';
+import Header from '../../components/Header';
 import ToastMsg from '../../components/ToastMsg';
 import { getBookingList, getTempleServiceList, processBooking } from '../../services/productService';
 
@@ -192,62 +192,64 @@ const formatAPIDateToISO = (apiDate) => {
   const year = date.getFullYear();
 
   return `${day}-${month}-${year}`;
+  
 };
 
 
   const confirmBooking = async () => {
-    if (!selectedDate || !selectedVariation) {
-      ToastMsg('Please select a date to continue', 'error');
-      return;
-    }
-    
-    if (markedDates[selectedDate]?.disabled) {
-      ToastMsg('This date is no longer available for booking.', 'error');
-      return;
-    }
-    
-    const customer_refcode = await AsyncStorage.getItem('ref_code');
-    
-    try {
-      setBookingLoading(true);
-      
-      const bookingData = {
-        cust_ref_code: customer_refcode,
-        call_mode: "ADD_BOOKING",
-        service_variation_id: selectedVariation.id,
-        booking_date: formatDateForAPI(selectedDate),
-        end_date: formatDateForAPI(selectedDate),
-        start_time: selectedVariation.start_time,
-        end_time: selectedVariation.end_time,
-        notes: `Booking for ${selectedService.name}`,
-        quantity: 1,
-        duration: selectedService.duration_minutes,
-        unit_price: selectedVariation.base_price
-      };
-      
-      const response = await processBooking(bookingData);
-      if (response.status === 200) {
-        setCalendarModalVisible(false);
-        setSelectedService(null);
-        setSelectedVariation(null);
-        setSelectedDate(null);
-        setMarkedDates({});
-        
-        ToastMsg('Your booking has been confirmed!', 'success');
-        
-        setTimeout(() => {
-          router.replace('/screens/MyBookings');
-        }, 2000);
-      } else {
 
-      }
-    } catch (error) {
-      ToastMsg(`Booking failed: ${error.message}`, 'error');
-    } finally {
-      setBookingLoading(false);
-        ToastMsg('Failed to process booking', 'error');
+  if (!selectedDate || !selectedVariation) {
+    ToastMsg('Please select a date to continue', 'error');
+    return;
+  }
+  
+  if (markedDates[selectedDate]?.disabled) {
+    ToastMsg('This date is no longer available for booking.', 'error');
+    return;
+  }
+  
+  const customer_refcode = await AsyncStorage.getItem('ref_code');
+
+  try {
+    setBookingLoading(true);
+    
+    const bookingData = {
+      cust_ref_code: customer_refcode,
+      call_mode: "ADD_BOOKING",
+      service_variation_id: selectedVariation.id,
+      booking_date: formatDateForAPI(selectedDate),
+      end_date: formatDateForAPI(selectedDate),
+      start_time: selectedVariation.start_time,
+      end_time: selectedVariation.end_time,
+      notes: `Booking for ${selectedService.name}`,
+      quantity: 1,
+      duration: selectedService.duration_minutes || 60,
+      unit_price: parseFloat(selectedVariation.base_price)
+    };
+
+    const response = await processBooking(bookingData);
+
+    if (response.status === 200) {
+      setCalendarModalVisible(false);
+      setSelectedService(null);
+      setSelectedVariation(null);
+      setSelectedDate(null);
+      setMarkedDates({});
+
+      ToastMsg('Your booking has been confirmed!', 'success');
+      
+      setTimeout(() => {
+        router.replace('/screens/MyBookings');
+      }, 2000);
+    } else {
+      ToastMsg('Failed to process booking', 'error');
     }
-  };
+  } catch (error) {
+    ToastMsg(`Booking failed: ${error.message}`, 'error');
+  } finally {
+    setBookingLoading(false);
+  }
+};
 
   const ServiceCard = ({ service }) => {
     const minPrice = service.service_variation_list?.length > 0 
@@ -333,6 +335,7 @@ const formatAPIDateToISO = (apiDate) => {
           <Title>Book Seva</Title>
           <Subtitle>Choose from available services</Subtitle>
         </Header>
+        
         <CenterContainer>
           <Ionicons name="calendar-outline" size={64} color="#CCC" />
           <EmptyText>Services will be available soon for booking</EmptyText>
@@ -346,33 +349,17 @@ const formatAPIDateToISO = (apiDate) => {
       <StatusBarBackground />
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       
-      <Header>
-        <HeaderRow>
-          <BackNav onPress={() => router.back()}/>
-          <TitleContainer>
-            <Title>Book Seva</Title>
-            <Subtitle>Choose from available services</Subtitle>
-          </TitleContainer>
-          <SearchButton onPress={toggleSearch}>
-            <Ionicons 
-              name={searchVisible ? "close" : "search"} 
-              size={24} 
-              color="#FFF" 
-            />
-          </SearchButton>
-        </HeaderRow>
-        {searchVisible && (
-          <SearchContainer>
-            <SearchInput
-              placeholder="Search events..."
-              placeholderTextColor="#11080892"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              autoFocus={true}
-            />
-          </SearchContainer>
-        )}
-      </Header>
+      <Header
+        type="type3"
+        title="Book Seva"
+        subtitle="Choose from available services"
+        showBackButton={true}
+        searchVisible={searchVisible}
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        onToggleSearch={toggleSearch}
+        onBackPress={() => router.back()}
+      />
 
       <List
         data={services}
@@ -518,14 +505,6 @@ const formatAPIDateToISO = (apiDate) => {
   );
 };
 
-// Styled components
-
-const HeaderRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  padding-top: ${Platform.OS === 'ios' ? 20 : 0}px;
-`;
-
 const SearchButton = styled.TouchableOpacity`
   height: 40px;
   width: 40px;
@@ -574,16 +553,6 @@ const StatusBarBackground = styled.View`
   top: 0;
   left: 0;
   z-index: 1;
-`;
-
-const Header = styled.View`
-  padding: 16px;
-  padding-top: ${Platform.OS === 'ios' ? 60 : 16}px;
-  padding-bottom: 12px;
-  background-color: #E88F14;
-  border-bottom-left-radius: 18px;
-  border-bottom-right-radius: 18px;
-  z-index: 2;
 `;
 
 const Title = styled.Text`

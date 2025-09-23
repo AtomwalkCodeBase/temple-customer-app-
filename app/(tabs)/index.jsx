@@ -13,11 +13,14 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
-  View,
+  TextInput,
+  View
 } from "react-native";
 import styled from "styled-components/native";
-import BookingDetails from "../../components/BookingDetails"; // Import the BookingDetails component
+import BookButton from "../../components/BookButton";
+import BookingDetails from "../../components/BookingDetails";
+import Header from "../../components/Header";
+import StatusCards from "../../components/StatusCards";
 import { getBookingList, getTempleList } from "../../services/productService";
 import PopUp from "../screens/PopUp";
 
@@ -28,52 +31,6 @@ const Screen = styled.SafeAreaView`
 `;
 const Container = styled.View`
   flex: 1;
-`;
-const Header = styled.View`
-  padding: 10px 20px 10px 20px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  background-color: #e88f14;
-`;
-const LeftHeader = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-`;
-const Avatar = styled.View`
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background-color: #7b61ff;
-`;
-const UserBlock = styled.View``;
-const UserName = styled.Text`
-  font-size: 18px;
-  font-weight: 700;
-  color: #1b1e28;
-`;
-const UserId = styled.Text`
-  font-size: 12px;
-  color: #4b4d50ff;
-  margin-top: 2px;
-`;
-const BellWrap = styled.TouchableOpacity`
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background-color: transparent;
-  align-items: center;
-  justify-content: center;
-`;
-const Dot = styled.View`
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 8px;
-  height: 8px;
-  border-radius: 4px;
-  background-color: #fa020bff;
 `;
 const SearchWrap = styled.View`
   margin: 16px 20px 14px 20px;
@@ -286,19 +243,6 @@ const promoStyles = StyleSheet.create({
     fontWeight: "800",
     marginTop: 10,
   },
-  button: {
-    marginTop: 14,
-    alignSelf: "flex-start",
-    backgroundColor: "#E88F14",
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 12,
-  },
-  buttonText: {
-    fontWeight: "800",
-    fontSize: 14,
-    color: "#3b2a00",
-  },
   dotRow: {
     flexDirection: "row",
     justifyContent: "center",
@@ -379,13 +323,11 @@ const PromoCarousel = memo(function PromoCarouselComponent({ data = [], onBook =
       </View>
       <Text style={promoStyles.meta}>{item.subtitle}</Text>
       <Text style={promoStyles.title}>{item.title}</Text>
-      <TouchableOpacity
-        style={promoStyles.button}
-        activeOpacity={0.9}
-        onPress={() => onBook(item)}
-      >
-        <Text style={promoStyles.buttonText}>Book now</Text>
-      </TouchableOpacity>
+      <BookButton 
+        onPress={() => onBook(item)} 
+        title="Book now" 
+        size="small" 
+      />
     </ImageBackground>
   );
   return (
@@ -443,7 +385,7 @@ function daysBetween(a, b) {
   const da = new Date(a.getFullYear(), a.getMonth(), a.getDate()).getTime();
   const db = new Date(b.getFullYear(), b.getMonth(), b.getDate()).getTime();
   return Math.round((da - db) / MS);
-}
+};
 export default function Home() {
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const [storedUser, setStoredUser] = useState();
@@ -453,6 +395,7 @@ export default function Home() {
   const [recent, setRecent] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null); // State for selected booking
   const [bookingDetailsVisible, setBookingDetailsVisible] = useState(false); // State for modal visibility
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Search placeholder rotation
   const placeholders = ["Search Temples", "Search Services"];
@@ -476,77 +419,103 @@ export default function Home() {
   
   // Load bookings for stats and recent list
   useEffect(() => {
-    (async () => {
-      try {
-        const resp = await getBookingList();
-        const list = Array.isArray(resp?.data) ? resp.data : [];
-        const withDates = list.map((b) => ({
-          ...b,
-          _date: parseDDMMYYYY(b?.booking_date), // expects "DD-MM-YYYY"
-        }));
-        const total = withDates.length;
-        const today = new Date();
-        const isCompleted = (b) => {
-          if (typeof b?.status === "string") {
-            const s = b.status.toLowerCase();
-            if (s.includes("complete")) return true;
-            if (s.includes("cancel")) return true;
-          }
-          if (b._date && b._date < today) return true;
-          return false;
-        };
-        const isActive = (b) => {
-          if (typeof b?.status === "string") {
-            const s = b.status.toLowerCase();
-            if (s.includes("pending")) return true;
-            if (s.includes("confirm")) return true;
-            if (s.includes("book")) return true;
-          }
-          if (b._date && b._date >= today) return true;
-          return false;
-        };
-        const active = withDates.filter(isActive).length;
-        const completed = withDates.filter(isCompleted).length;
-        
-        // Process recent bookings with proper data
-        const recentBookings = withDates
-          .sort((a, b) => {
-            const ta = a._date ? a._date.getTime() : -Infinity;
-            const tb = b._date ? b._date.getTime() : -Infinity;
-            return tb - ta;
-          })
-          .slice(0, 5)
-          .map((b) => {
-            // Get service name from service_data if available
-            const serviceName = b.service_data?.name || b.service_name || "Service";
-            
-            // Get temple name from service_data if available
-            const templeName = b.service_data?.temple_name || b.temple_name || "Temple";
-            
-            // Get image from service_data if available
-            const imageUrl = b.service_data?.image || null;
-            
-            return {
-              id: String(b.id ?? `${b.booking_id ?? Math.random()}`),
-              title: serviceName,
-              date: b.booking_date || "",
-              place: templeName,
-              image: imageUrl,
-              pillType: typeof b?.status === "string" && b.status.toLowerCase().includes("pending")
+  (async () => {
+    try {
+      const userRefCode = await AsyncStorage.getItem("ref_code"); // current logged-in user
+      const resp = await getBookingList();
+      const list = Array.isArray(resp?.data) ? resp.data : [];
+
+      // ✅ Filter only current user's bookings
+      const userBookings = list.filter(
+        (b) =>
+          b.ref_code === userRefCode || 
+          b.customer_data?.cust_ref_code === userRefCode
+      );
+
+      const withDates = userBookings.map((b) => ({
+        ...b,
+        _date: parseDDMMYYYY(b?.booking_date), // expects "DD-MM-YYYY"
+      }));
+
+      const total = withDates.length;
+      const today = new Date();
+
+      const isCompleted = (b) => {
+        if (typeof b?.status === "string") {
+          const s = b.status.toLowerCase();
+          if (s.includes("complete")) return true;
+          if (s.includes("cancel")) return true;
+        }
+        if (b._date && b._date < today) return true;
+        return false;
+      };
+
+      const isActive = (b) => {
+        if (typeof b?.status === "string") {
+          const s = b.status.toLowerCase();
+          if (s.includes("pending")) return true;
+          if (s.includes("confirm")) return true;
+          if (s.includes("book")) return true;
+        }
+        if (b._date && b._date >= today) return true;
+        return false;
+      };
+
+      const active = withDates.filter(isActive).length;
+      const completed = withDates.filter(isCompleted).length;
+
+      // Process only this user's recent bookings
+      const recentBookings = withDates
+        .sort((a, b) => {
+          const ta = a._date ? a._date.getTime() : -Infinity;
+          const tb = b._date ? b._date.getTime() : -Infinity;
+          return tb - ta;
+        })
+        .slice(0, 5)
+        .map((b) => {
+          const serviceName = b.service_data?.name || b.service_name || "Service";
+          const templeName = b.service_data?.temple_name || b.temple_name || "Temple";
+          const imageUrl = b.service_data?.image || null;
+
+          return {
+            id: String(b.id ?? `${b.booking_id ?? Math.random()}`),
+            title: serviceName,
+            date: b.booking_date || "",
+            place: templeName,
+            image: imageUrl,
+            pillType:
+              typeof b?.status === "string" && b.status.toLowerCase().includes("pending")
                 ? "pending"
                 : "booked",
-              bookingData: b, // Keep the full booking data for navigation
-            };
-          });
-        
-        setStats({ total, active, completed });
-        setRecent(recentBookings);
+            bookingData: b,
+          };
+        });
+
+      setStats({ total, active, completed });
+      setRecent(recentBookings);
+    } catch (e) {
+      setStats({ total: 0, active: 0, completed: 0 });
+      setRecent([]);
+    }
+  })();
+}, []);
+
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const prompted = await AsyncStorage.getItem("fingerprintPrompted");
+        if (!prompted) {
+          // First login → show popup
+          setIsPopupVisible(true);
+        }
       } catch (e) {
-        setStats({ total: 0, active: 0, completed: 0 });
-        setRecent([]);
+        console.log("Error reading fingerprintPrompted:", e);
+        setIsPopupVisible(true); // fallback to show popup
       }
     })();
   }, []);
+
 
   const handleYes = async () => {
     const result = await LocalAuthentication.authenticateAsync({
@@ -610,7 +579,7 @@ export default function Home() {
   }, []);
   
   const onAddNew = () => {
-    router.push("/(tabs)/temples");
+    router.push("/(tabs)/events");
   };
   
   const onBookFromSlide = (item) => {
@@ -675,50 +644,43 @@ export default function Home() {
   return (
     <Screen>
       <Container>
+        <Header
+            type="type1"
+            userName="Vishnuvardhan"
+            userId={refCode}
+            bellRotate={bellRotate}
+            onBellPress={() => console.log("Bell pressed")}
+            hasNotification={true}
+          />
         <ScrollView showsVerticalScrollIndicator={false} nestedScrollEnabled>
-          <Header>
-            <LeftHeader>
-              <Avatar />
-              <UserBlock>
-                <UserName>Vishnuvardhan</UserName>
-                <UserId>{refCode}</UserId>
-              </UserBlock>
-            </LeftHeader>
-            <BellWrap activeOpacity={0.8}>
-              <Animated.View style={{ transform: [{ rotate: bellRotate }] }}>
-                <Ionicons name="notifications-outline" size={22} color="#fff" />
-              </Animated.View>
-              <Dot />
-            </BellWrap>
-          </Header>
+
           <SearchWrap>
             <SearchBar>
               <Ionicons name="search" size={18} color="#9aa3b2" />
-              <SearchPlaceholder>{placeholders[index]}</SearchPlaceholder>
+              <TextInput
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder={placeholders[index]}
+                placeholderTextColor="#9aa3b2"
+                style={{
+                  flex: 1,
+                  marginLeft: 10,
+                  fontSize: 14,
+                  color: "#000", // typed text color
+                }}
+                returnKeyType="search"
+              />
             </SearchBar>
           </SearchWrap>
           <PromoCarousel data={promoData} onBook={onBookFromSlide} />
-          <SectionHeader>
-            <SectionTitle>Your Bookings</SectionTitle>
-            <AddNew activeOpacity={0.85} onPress={onAddNew}>
-              <Ionicons name="add-circle-outline" size={16} color="#3a7bd5" />
-              <AddNewText>Add new</AddNewText>
-            </AddNew>
-          </SectionHeader>
-          <StatsRow>
-            <StatCard bg="#7b61ff">
-              <StatNumber>{stats.total}</StatNumber>
-              <StatLabel>Total Bookings</StatLabel>
-            </StatCard>
-            <StatCard bg="#ff7066">
-              <StatNumber>{stats.active}</StatNumber>
-              <StatLabel>Active Bookings</StatLabel>
-            </StatCard>
-            <StatCard bg="#d79b2d">
-              <StatNumber>{stats.completed}</StatNumber>
-              <StatLabel>Completed</StatLabel>
-            </StatCard>
-          </StatsRow>
+          <StatusCards 
+            stats={{
+              total: 15,
+              active: 3,
+              completed: 12
+            }}
+            onAddNew={() => router.push("/events")}
+          />
           <SectionHeader style={{ marginTop: 6 }}>
             <SectionTitle>Recent Bookings</SectionTitle>
           </SectionHeader>
