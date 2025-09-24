@@ -17,3 +17,6 @@ export const process_booking_data = `${customerEndpoint}/process_booking_data/`;
 export const get_booking_list = `${customerEndpoint}/get_booking_list/`;
 
 export const customer_set_pin = `${customerEndpoint}/customer_reset_pin/`;
+
+// Github API
+export const GITHUB_PANCHANG_BASE_URL = 'https://raw.githubusercontent.com/AtomwalkCodeBase/Blogs/main/hindu-panchang-data';
