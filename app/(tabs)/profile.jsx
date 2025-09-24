@@ -69,6 +69,10 @@ export default function Profile() {
     router.push("/PanchangScreen");
   };
 
+   const handleSetting = async () => {
+    router.push("/ProfileSetting");
+  };
+
   const handleMybookings = async () => {
     router.push("/screens/MyBookings");
   };
@@ -87,25 +91,25 @@ export default function Profile() {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.container}>
-        {/* Top Header */}
-        <View style={styles.topHeader}>
-          <Text style={styles.headerTitle}>User Profile</Text>
-          <View style={styles.headerLine} />
-        </View>
+    <View style={styles.container}>
+      {/* Top Header */}
+      <View style={styles.topHeader}>
+        <Text style={styles.headerTitle}>User Profile</Text>
+        <View style={styles.headerLine} />
+      </View>
 
-        {/* Profile Header */}
-        <View style={styles.profileHeader}>
-          <Image
-            source={{ uri: "https://i.pravatar.cc/150?img=12" }}
-            style={styles.avatar}
-          />
-          <Text style={styles.name}>Vishnuvardhan</Text>
+      {/* Profile Header */}
+      <View style={styles.profileHeader}>
+        <Image
+          source={{ uri: "https://i.pravatar.cc/150?img=12" }}
+          style={styles.avatar}
+        />
+        <Text style={styles.name}>Vishnuvardhan</Text>
           <Text style={styles.subtext}>{userRef}</Text>
-        </View>
+      </View>
 
-        {/* Details Section */}
-        <View style={styles.card}>
+      {/* Details Section */}
+      <View style={styles.card}>
           <View style={styles.row}>
             <Text style={styles.label}>Profile Settings</Text>
           </View>
@@ -113,40 +117,40 @@ export default function Profile() {
           style={styles.row}
           onPress={handleMybookings}
         >
-            <Text style={styles.label}>My Bookings</Text>
-          </TouchableOpacity>
-          <View style={styles.row}>
-            <Text style={styles.label}>Account Settings</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Help & Support</Text>
-          </View>
+          <Text style={styles.label}>My Bookings</Text>
+        </TouchableOpacity>
+        <View style={styles.row}>
+          <Text style={styles.label}>Account Settings</Text>
+        </View>
+        <View style={styles.row}>
+          <Text style={styles.label}>Help & Support</Text>
+        </View>
         {/* <TouchableOpacity style={styles.row} onPress={handlePanchang}>
           <Text style={styles.label}>Panchang</Text>
         </TouchableOpacity> */}
-        </View>
+      </View>      
 
-        {/* Fingerprint Toggle */}
-        <View style={styles.toggleRow}>
-          <Text style={styles.toggleText}>Fingerprint Login</Text>
-          <Switch
-            value={biometricEnabled}
-            onValueChange={toggleBiometric}
-            trackColor={{ false: "#ccc", true: "#e8901496" }}
-            thumbColor={biometricEnabled ? "#E88F14" : "#f4f3f4"}
-          />
-        </View>
-
-        {/* Set/Update Pin */}
-        <TouchableOpacity style={styles.pinBtn} onPress={handleSetPin}>
-          <Text style={styles.pinText}>Update PIN</Text>
-        </TouchableOpacity>
-
-        {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
+      {/* Fingerprint Toggle */}
+      <View style={styles.toggleRow}>
+        <Text style={styles.toggleText}>Fingerprint Login</Text>
+        <Switch
+          value={biometricEnabled}
+          onValueChange={toggleBiometric}
+          trackColor={{ false: "#ccc", true: "#e8901496" }}
+          thumbColor={biometricEnabled ? "#E88F14" : "#f4f3f4"}
+        />
       </View>
+
+      {/* Set/Update Pin */}
+      <TouchableOpacity style={styles.pinBtn} onPress={handleSetPin}>
+        <Text style={styles.pinText}>Update PIN</Text>
+      </TouchableOpacity>
+
+      {/* Logout Button */}
+      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+        <Text style={styles.logoutText}>Logout</Text>
+      </TouchableOpacity>
+    </View>
     </ScrollView>
   );
 }
