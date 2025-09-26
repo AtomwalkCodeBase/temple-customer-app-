@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Button from '../../components/Button';
 import TextField from '../../components/TextField';
 import { customerForgotPin } from '../../services/authService';
 
@@ -57,24 +58,11 @@ export default function ForgotPinScreen() {
                     value={mobile}
                     onChangeText={setMobile}
                   />
-
-                  <TouchableOpacity
-                    style={styles.primaryBtn}
+                  <Button
+                    title="Reset PIN"
                     onPress={handleResetPin}
-                    disabled={loading}
-                    activeOpacity={0.8}
-                  >
-                    <LinearGradient
-                      colors={['#eacc0cff', '#dc6326ff']}
-                      style={styles.primaryGradient}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                    >
-                      <Text style={styles.primaryText}>
-                        {loading ? 'Processing...' : 'Reset PIN'}
-                      </Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
+                    width="100%"
+                  />
                 </>
               ) : (
                 <View style={styles.pinContainer}>

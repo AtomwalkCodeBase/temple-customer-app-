@@ -1,8 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
-import { ImageBackground, Platform } from "react-native";
-import styled from "styled-components/native";
-import BookButton from "./BookButton";
+import { ImageBackground, Platform, StyleSheet, Text, View } from "react-native";
+import Button from "./Button";
 
 const Cards = ({
   // Common props
@@ -26,230 +25,264 @@ const Cards = ({
   
   // Action props
   onBookPress,
+  onBookingDetailsPress, // New prop for booking details
   bookButtonText = "Book now",
   
   // Style props
   width,
   showRating = true,
   showPrice = true,
+  
+  // New props for booking details
+  refCode, // Reference code to display
+  showBookingDetailsButton = false, // Control visibility of booking details button
 }) => {
   return (
-    <Card width={width}>
+    <View style={[styles.card, { width: width || '100%' }]}>
       {/* Image Section with Rating */}
-      <TopImage source={{ uri: image }}>
+      <ImageBackground source={{ uri: image }} style={styles.topImage}>
         {showRating && rating !== undefined && (
-          <RatingPill>
+          <View style={styles.ratingPill}>
             <Ionicons name="star" size={12} color="#fff" />
-            <RatingText>{typeof rating === 'number' ? rating.toFixed(1) : rating}</RatingText>
-          </RatingPill>
+            <Text style={styles.ratingText}>
+              {typeof rating === 'number' ? rating.toFixed(1) : rating}
+            </Text>
+          </View>
         )}
-        {type === "service" && <ImageGradient colors={['transparent', 'rgba(0,0,0,0.8)']} />}
-      </TopImage>
+        {type === "service" && (
+          <LinearGradient 
+            colors={['transparent', 'rgba(0,0,0,0.8)']} 
+            style={styles.imageGradient}
+          />
+        )}
+      </ImageBackground>
 
-      <CardBody>
+      <View style={styles.cardBody}>
         {/* Title */}
-        <Title numberOfLines={1}>{title}</Title>
+        <Text style={styles.title} numberOfLines={1}>{title}</Text>
         
         {/* Subtitle - Temple name for services, Location for temples */}
         {type === "service" && templeName && (
-          <Subtitle numberOfLines={1}>{templeName}</Subtitle>
+          <Text style={styles.subtitle} numberOfLines={1}>{templeName}</Text>
         )}
         
         {type === "temple" && location && (
-          <Row>
+          <View style={styles.row}>
             <Ionicons name="location-outline" size={14} color="#6b7280" />
-            <Meta numberOfLines={2}>{location}</Meta>
-          </Row>
+            <Text style={styles.meta} numberOfLines={2}>{location}</Text>
+          </View>
         )}
 
         {/* Email (Temple only) */}
         {type === "temple" && email && (
-          <Row style={{ marginTop: 6 }}>
+          <View style={[styles.row, { marginTop: 6 }]}>
             <Ionicons name="mail-outline" size={14} color="#6b7280" />
-            <Meta numberOfLines={1}>{email}</Meta>
-          </Row>
+            <Text style={styles.meta} numberOfLines={1}>{email}</Text>
+          </View>
         )}
 
         {/* Description (Service only) */}
         {type === "service" && description && (
-          <Description numberOfLines={2}>{description}</Description>
+          <Text style={styles.description} numberOfLines={2}>{description}</Text>
         )}
 
         {/* Price and Capacity (Service only) */}
         {type === "service" && (showPrice || capacity) && (
-          <PriceCapacityContainer>
+          <View style={styles.priceCapacityContainer}>
             {showPrice && price !== undefined && (
-              <PriceText>
+              <Text style={styles.priceText}>
                 {parseFloat(price) === 0 ? "Free" : `₹${parseFloat(price).toFixed(2)}`}
-              </PriceText>
+              </Text>
             )}
             {capacity && (
-              <CapacityText>Capacity: {capacity}</CapacityText>
+              <Text style={styles.capacityText}>Capacity: {capacity}</Text>
             )}
-          </PriceCapacityContainer>
+          </View>
         )}
 
         {/* Timings (Temple only) */}
         {type === "temple" && timings.length > 0 && (
           <>
-            <SectionLabel>Temple Timings</SectionLabel>
-            <Chips>
+            <Text style={styles.sectionLabel}>Temple Timings</Text>
+            <View style={styles.chips}>
               {timings.slice(0, 2).map((timing, index) => (
-                <Chip key={index}>
-                  <ChipText numberOfLines={1}>{timing}</ChipText>
-                </Chip>
+                <View key={index} style={styles.chip}>
+                  <Text style={styles.chipText} numberOfLines={1}>{timing}</Text>
+                </View>
               ))}
               {timings.length > 2 && (
-                <Chip>
-                  <ChipText>+{timings.length - 2} more</ChipText>
-                </Chip>
+                <View style={styles.chip}>
+                  <Text style={styles.chipText}>+{timings.length - 2} more</Text>
+                </View>
               )}
-            </Chips>
+            </View>
           </>
         )}
 
+        {/* Booking Details Button (Top right corner) */}
+        {showBookingDetailsButton && onBookingDetailsPress && (
+          <View style={styles.bookingDetailsContainer}>
+            <Button 
+              title="Booking Details" 
+              onPress={onBookingDetailsPress}
+              size="small"
+              variant="outline"
+              style={styles.bookingDetailsButton}
+            />
+          </View>
+        )}
+
         {/* Book Button */}
-        <BookButton 
+        <Button 
           title={bookButtonText} 
-          onPress={onBookPress} 
+          onPress={onBookPress}
+          size="medium"
           style={{ marginTop: type === "service" ? 8 : 12 }}
         />
-      </CardBody>
-    </Card>
+
+        {/* Reference Code */}
+        {refCode && (
+          <Text style={styles.refCode}>Ref: {refCode}</Text>
+        )}
+      </View>
+    </View>
   );
 };
 
-// Styled Components
-const Card = styled.View`
-  width: ${props => props.width || '100%'};
-  background-color: #ffffff;
-  border-radius: 16px;
-  overflow: hidden;
-  ${Platform.select({
-    ios: `
-      shadow-color: #000;
-      shadow-opacity: 0.08;
-      shadow-radius: 12px;
-      shadow-offset: 0px 4px;
-    `,
-    android: `
-      elevation: 3;
-    `,
-  })}
-`;
-
-const TopImage = styled(ImageBackground)`
-  width: 100%;
-  height: 120px;
-  overflow: hidden;
-`;
-
-const ImageGradient = styled(LinearGradient)`
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 70px;
-  height: 50px;
-`;
-
-const RatingPill = styled.View`
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: rgba(0,0,0,0.45);
-  padding: 4px 8px;
-  border-radius: 12px;
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-`;
-
-const RatingText = styled.Text`
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-`;
-
-const CardBody = styled.View`
-  padding: 12px;
-`;
-
-const Title = styled.Text`
-  font-size: 15px;
-  font-weight: 800;
-  color: #1f2937;
-  margin-bottom: 4px;
-`;
-
-const Subtitle = styled.Text`
-  font-size: 14px;
-  color: #4a6da7;
-  margin-bottom: 8px;
-  font-weight: 500;
-`;
-
-const Row = styled.View`
-  margin-top: 6px;
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-`;
-
-const Meta = styled.Text`
-  flex: 1;
-  color: #6b7280;
-  font-size: 12px;
-`;
-
-const Description = styled.Text`
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 12px;
-  line-height: 20px;
-`;
-
-const PriceCapacityContainer = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-`;
-
-const PriceText = styled.Text`
-  font-size: 16px;
-  font-weight: bold;
-  color: #4a6da7;
-`;
-
-const CapacityText = styled.Text`
-  font-size: 14px;
-  color: #888;
-`;
-
-const SectionLabel = styled.Text`
-  margin-top: 10px;
-  color: #6b7280;
-  font-size: 12px;
-  font-weight: 700;
-`;
-
-const Chips = styled.View`
-  margin-top: 6px;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 6px;
-`;
-
-const Chip = styled.View`
-  padding: 6px 10px;
-  background-color: #eef2ff;
-  border-radius: 10px;
-`;
-
-const ChipText = styled.Text`
-  color: #4338ca;
-  font-weight: 700;
-  font-size: 12px;
-`;
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    marginBottom: 0,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 4 },
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  topImage: {
+    width: '100%',
+    height: 120,
+    overflow: 'hidden',
+  },
+  imageGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 70,
+    height: 50,
+  },
+  ratingPill: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  ratingText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  cardBody: {
+    padding: 12,
+  },
+  title: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#4a6da7',
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  row: {
+    marginTop: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  meta: {
+    flex: 1,
+    color: '#6b7280',
+    fontSize: 12,
+  },
+  description: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  priceCapacityContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  priceText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4a6da7',
+  },
+  capacityText: {
+    fontSize: 14,
+    color: '#888',
+  },
+  sectionLabel: {
+    marginTop: 10,
+    color: '#6b7280',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  chips: {
+    marginTop: 6,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  chip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#eef2ff',
+    borderRadius: 10,
+  },
+  chipText: {
+    color: '#4338ca',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  // New styles for booking details and reference code
+  bookingDetailsContainer: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+  },
+  bookingDetailsButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  refCode: {
+    fontSize: 12,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+});
 
 export default Cards;

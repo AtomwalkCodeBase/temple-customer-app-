@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import MainButton from '../../components/MainButton';
+import Button from '../../components/Button';
 import TextField from '../../components/TextField';
 import { customerLogin } from '../../services/authService';
 
@@ -125,10 +125,12 @@ useEffect(() => {
               <TouchableOpacity onPress={() => router.push('/screens/Forgot-pin')}>
                 <Text style={styles.forgot}>Forgot PIN?</Text>
               </TouchableOpacity>
-
-              <MainButton
+              <Button
                 title="Login"
                 onPress={handleLogin}
+                width="100%"
+                loading={loading}
+                loadingText="Logging..."
               />
               <Text style={styles.registerLine}>
                 Don’t have an account?{' '}

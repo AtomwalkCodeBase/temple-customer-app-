@@ -1,12 +1,18 @@
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Dimensions, FlatList, ImageBackground, Platform } from "react-native";
-import styled from "styled-components/native";
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  View
+} from "react-native";
 import Cards from "../../components/Cards";
 import Header from "../../components/Header";
 import PopupCardComponent from "../../components/PopupCard";
 import { getTempleList } from "../../services/productService";
-
 
 const { width } = Dimensions.get("window");
 const H_PADDING = 16;               
@@ -15,7 +21,6 @@ const CARD_W = Math.floor((width - H_PADDING * 2 - COL_GAP) / 2);
 
 export default function Temples() {
   const router = useRouter();
-  const [q, setQ] = useState("");
   const [loc, setLoc] = useState("");
   const [minRating, setMinRating] = useState("");
   const [data, setData] = useState([]);
@@ -58,7 +63,7 @@ export default function Temples() {
 
         setData(temples);
       } catch (error) {
-        console.log("Error fetching temples:", error);
+        
       } finally {
         setLoading(false);
       }
@@ -119,14 +124,39 @@ const onEvents = () => {
 
   if (loading) {
     return (
-      <Screen style={{ justifyContent: "center", alignItems: "center" }}>
+      <View style={[styles.screen, styles.loadingContainer]}>
         <ActivityIndicator size="large" color="#E88F14" />
-      </Screen>
+      </View>
     );
   }
 
+  const renderItem = ({ item }) => (
+    <Cards
+      type="temple"
+      image={item.image}
+      title={item.name}
+      location={item.location}
+      email={item.email}
+      rating={item.rating}
+      timings={item.timings}
+      onBookPress={() => openPopup(item)}
+      width={CARD_W}
+    />
+  );
+
+  const columnWrapperStyle = {
+    justifyContent: "space-between",
+    paddingHorizontal: H_PADDING,
+    marginBottom: 16,
+  };
+
+  const contentContainerStyle = { 
+    paddingTop: 12, 
+    paddingBottom: 24 
+  };
+
   return (
-    <Screen>
+    <SafeAreaView style={styles.screen}>
       <Header
         type="type2"
         userName="Vishnuvardhan"
@@ -135,16 +165,12 @@ const onEvents = () => {
         onSearchPress={handleSearch}
       />
 
-      <List
+      <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
         numColumns={2}
-        columnWrapperStyle={{
-          justifyContent: "space-between",
-          paddingHorizontal: H_PADDING,
-          marginBottom: 16,
-        }}
-        contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
+        columnWrapperStyle={columnWrapperStyle}
+        contentContainerStyle={contentContainerStyle}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
       />
@@ -157,158 +183,132 @@ const onEvents = () => {
         onPooja={onPooja}
         onEvents={onEvents}
       />
-
-    </Screen>
+    </SafeAreaView>
   );
 }
 
-
-const renderItem = ({ item }) => (
-  <Cards
-    type="temple"
-    image={item.image}
-    title={item.name}
-    location={item.location}
-    email={item.email}
-    rating={item.rating}
-    timings={item.timings}
-    onBookPress={() => openPopup(item)}
-    width={CARD_W}
-  />
-);
-
-const Screen = styled.SafeAreaView`
-  flex: 1;
-  background-color: #f6f7fb;
-`;
-
-const TitleRow = styled.View``;
-
-const Title = styled.Text`
-  color: #ffffff;
-  font-size: 24px;
-  font-weight: 800;
-`;
-
-const Subtitle = styled.Text`
-  color: #e9e6ff;
-  font-size: 12px;
-  margin-top: 6px;
-`;
-
-const Filters = styled.View`
-  margin-top: 14px;
-  background-color: #ffffff;
-  border-radius: 14px;
-  padding: 10px;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-`;
-
-const Input = styled.TextInput`
-  flex: 1;
-  height: 40px;
-  background-color: #f3f4f6;
-  border-radius: 10px;
-  padding: 0 12px;
-  color: #111827;
-`;
-
-const BtnText = styled.Text`
-  color: #fff;
-  font-weight: 700;
-`;
-
-const List = styled(FlatList).attrs(() => ({}))``;
-
-const Card = styled.View`
-  width: ${CARD_W}px;
-  background-color: #ffffff;
-  border-radius: 16px;
-  overflow: hidden;
-  ${Platform.select({
-    ios: `
-      shadow-color: #000;
-      shadow-opacity: 0.08;
-      shadow-radius: 12px;
-      shadow-offset: 0px 4px;
-    `,
-    android: `
-      elevation: 3;
-    `,
-  })}
-`;
-
-const TopImage = styled(ImageBackground)`
-  width: 100%;
-  height: 120px;
-  overflow: hidden;
-`;
-
-const RatingPill = styled.View`
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: rgba(0,0,0,0.45);
-  padding: 4px 8px;
-  border-radius: 12px;
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-`;
-
-const RatingText = styled.Text`
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-`;
-
-const CardBody = styled.View`
-  padding: 12px;
-`;
-
-const TempleName = styled.Text`
-  font-size: 15px;
-  font-weight: 800;
-  color: #1f2937;
-`;
-
-const Row = styled.View`
-  margin-top: 6px;
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-`;
-
-const Meta = styled.Text`
-  flex: 1;
-  color: #6b7280;
-  font-size: 12px;
-`;
-
-const SectionLabel = styled.Text`
-  margin-top: 10px;
-  color: #6b7280;
-  font-size: 12px;
-  font-weight: 700;
-`;
-
-const Chips = styled.View`
-  margin-top: 6px;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 6px;
-`;
-
-const Chip = styled.View`
-  padding: 6px 10px;
-  background-color: #eef2ff;
-  border-radius: 10px;
-`;
-
-const ChipText = styled.Text`
-  color: #4338ca;
-  font-weight: 700;
-  font-size: 12px;
-`;
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#f6f7fb",
+  },
+  loadingContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  titleRow: {
+    // Styles for TitleRow component
+  },
+  title: {
+    color: "#ffffff",
+    fontSize: 24,
+    fontWeight: "800",
+  },
+  subtitle: {
+    color: "#e9e6ff",
+    fontSize: 12,
+    marginTop: 6,
+  },
+  filters: {
+    marginTop: 14,
+    backgroundColor: "#ffffff",
+    borderRadius: 14,
+    padding: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  input: {
+    flex: 1,
+    height: 40,
+    backgroundColor: "#f3f4f6",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    color: "#111827",
+  },
+  btnText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+  card: {
+    width: CARD_W,
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    overflow: "hidden",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 4 },
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  topImage: {
+    width: "100%",
+    height: 120,
+    overflow: "hidden",
+  },
+  ratingPill: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  ratingText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  cardBody: {
+    padding: 12,
+  },
+  templeName: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#1f2937",
+  },
+  row: {
+    marginTop: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  meta: {
+    flex: 1,
+    color: "#6b7280",
+    fontSize: 12,
+  },
+  sectionLabel: {
+    marginTop: 10,
+    color: "#6b7280",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  chips: {
+    marginTop: 6,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  chip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "#eef2ff",
+    borderRadius: 10,
+  },
+  chipText: {
+    color: "#4338ca",
+    fontWeight: "700",
+    fontSize: 12,
+  },
+});

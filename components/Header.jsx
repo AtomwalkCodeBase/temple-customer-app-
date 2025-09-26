@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Animated, Platform } from 'react-native';
-import styled from 'styled-components/native';
+import { Animated, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const Header = ({ 
   type = 'type1', 
@@ -23,7 +22,8 @@ const Header = ({
   searchQuery = "",
   onSearchQueryChange,
   onToggleSearch,
-  onBackPress
+  onBackPress,
+  paddingTop = Platform.OS === 'ios' ? 60 : 20 
 }) => {
   const router = useRouter();
 
@@ -35,80 +35,103 @@ const Header = ({
     }
   };
 
+  const getHeaderContainerStyle = () => {
+    const baseStyle = [styles.headerContainer];
+    
+    switch (type) {
+      case 'type3':
+        baseStyle.push(styles.headerContainerType3);
+        baseStyle.push({ paddingTop });
+        break;
+      case 'type2':
+        baseStyle.push(styles.headerContainerType2);
+        break;
+      case 'type1':
+      default:
+        baseStyle.push(styles.headerContainerType1);
+        break;
+    }
+    
+    return baseStyle;
+  };
+
   const renderType1 = () => (
-    <HeaderContainer type={type}>
-      <LeftHeader>
-        <Avatar>
+    <View style={getHeaderContainerStyle()}>
+      <View style={styles.leftHeader}>
+        <View style={styles.avatar}>
           <Ionicons name="person-outline" size={24} color="#fff" />
-        </Avatar>
-        <UserBlock>
-          <UserName>{userName}</UserName>
-          <UserId>{userId}</UserId>
-        </UserBlock>
-      </LeftHeader>
-      <BellWrap activeOpacity={0.8} onPress={onBellPress}>
+        </View>
+        <View style={styles.userBlock}>
+          <Text style={styles.userName}>{userName}</Text>
+          <Text style={styles.userId}>{userId}</Text>
+        </View>
+      </View>
+      <TouchableOpacity style={styles.bellWrap} activeOpacity={0.8} onPress={onBellPress}>
         <Animated.View style={{ transform: [{ rotate: bellRotate }] }}>
           <Ionicons name="notifications-outline" size={22} color="#fff" />
         </Animated.View>
-        {hasNotification && <Dot />}
-      </BellWrap>
-    </HeaderContainer>
+        {hasNotification && <View style={styles.dot} />}
+      </TouchableOpacity>
+    </View>
   );
 
   const renderType2 = () => (
-    <HeaderContainer type={type}>
-      <TitleRow>
-        <Title>{title}</Title>
-        <Subtitle>{subtitle}</Subtitle>
-      </TitleRow>
+    <View style={getHeaderContainerStyle()}>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.subtitle}>{subtitle}</Text>
+      </View>
 
-      <Filters>
-        <Input
+      <View style={styles.filters}>
+        <TextInput
+          style={styles.input}
           placeholder="Search temples"
+          placeholderTextColor="#6b7280"
           value={searchValue}
           onChangeText={onSearchChange}
           returnKeyType="search"
           onSubmitEditing={onSearchPress}
         />
-        <SearchBtn activeOpacity={0.9} onPress={onSearchPress}>
-          <BtnText>Search</BtnText>
-        </SearchBtn>
-      </Filters>
-    </HeaderContainer>
+        <TouchableOpacity style={styles.searchBtn} activeOpacity={0.9} onPress={onSearchPress}>
+          <Text style={styles.btnText}>Search</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 
   const renderType3 = () => (
-    <HeaderContainer type={type}>
-      <HeaderRow>
+    <View style={getHeaderContainerStyle()}>
+      <View style={styles.headerRow}>
         {showBackButton && (
-          <BackNav onPress={handleBackPress}>
+          <TouchableOpacity style={styles.backNav} onPress={handleBackPress}>
             <Ionicons name="arrow-back" size={24} color="#FFF" />
-          </BackNav>
+          </TouchableOpacity>
         )}
-        <TitleContainer>
-          <Title>{title}</Title>
-          <Subtitle>{subtitle}</Subtitle>
-        </TitleContainer>
-        <SearchButton onPress={onToggleSearch}>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.subtitle}>{subtitle}</Text>
+        </View>
+        <TouchableOpacity style={styles.searchButton} onPress={onToggleSearch}>
           <Ionicons 
             name={searchVisible ? "close" : "search"} 
             size={24} 
             color="#FFF" 
           />
-        </SearchButton>
-      </HeaderRow>
+        </TouchableOpacity>
+      </View>
       {searchVisible && (
-        <SearchContainer>
-          <SearchInput
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
             placeholder="Search events..."
             placeholderTextColor="#11080892"
             value={searchQuery}
             onChangeText={onSearchQueryChange}
             autoFocus={true}
           />
-        </SearchContainer>
+        </View>
       )}
-    </HeaderContainer>
+    </View>
   );
 
   const renderHeader = () => {
@@ -126,200 +149,165 @@ const Header = ({
   return renderHeader();
 };
 
-// Styled Components
-const HeaderContainer = styled.View`
-  padding: ${props => props.type === 'type3' ? '16px' : '10px 20px 10px 20px'};
-  padding-top: ${props => 
-    props.type === 'type3' && Platform.OS === 'ios' ? '60px' : 
-    props.type === 'type3' ? '16px' : '10px'};
-  padding-bottom: ${props => props.type === 'type3' ? '12px' : '10px'};
-  flex-direction: ${props => props.type === 'type1' ? 'row' : 'column'};
-  align-items: ${props => props.type === 'type1' ? 'center' : 'flex-start'};
-  justify-content: ${props => props.type === 'type1' ? 'space-between' : 'flex-start'};
-  background-color: #e88f14;
-  border-bottom-left-radius: 18px;
-  border-bottom-right-radius: 18px;
-  z-index: ${props => props.type === 'type3' ? '2' : '1'};
-`;
-
-const LeftHeader = styled.View`
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-`;
-
-const Avatar = styled.View`
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
-  background-color: rgba(255, 255, 255, 0.2);
-  align-items: center;
-  justify-content: center;
-`;
-
-const UserBlock = styled.View``;
-
-const UserName = styled.Text`
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: 600;
-`;
-
-const UserId = styled.Text`
-  color: #e9e6ff;
-  font-size: 12px;
-  margin-top: 2px;
-`;
-
-const BellWrap = styled.TouchableOpacity`
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background-color: transparent;
-  align-items: center;
-  justify-content: center;
-`;
-
-const Dot = styled.View`
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 8px;
-  height: 8px;
-  border-radius: 4px;
-  background-color: #fa020bff;
-`;
-
-const TitleRow = styled.View`
-  margin-bottom: 14px;
-`;
-
-const Title = styled.Text`
-  color: #ffffff;
-  font-size: 24px;
-  font-weight: 800;
-`;
-
-const Subtitle = styled.Text`
-  color: #e9e6ff;
-  font-size: 12px;
-  margin-top: 6px;
-`;
-
-const Filters = styled.View`
-  background-color: #ffffff;
-  border-radius: 14px;
-  padding: 10px;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-`;
-
-const Input = styled.TextInput`
-  flex: 1;
-  height: 40px;
-  background-color: #f3f4f6;
-  border-radius: 10px;
-  padding: 0 12px;
-  color: #111827;
-`;
-
-const SearchBtn = styled.TouchableOpacity`
-  height: 40px;
-  padding: 0 14px;
-  border-radius: 10px;
-  background-color: #E88F14;
-  align-items: center;
-  justify-content: center;
-`;
-
-const BtnText = styled.Text`
-  color: #fff;
-  font-weight: 700;
-`;
-
-const HeaderRow = styled.View`
-  flex-direction: row;
-  align-items: center;
-  padding-top: ${Platform.OS === 'ios' ? '20px' : '0px'};
-`;
-
-const BackNav = styled.TouchableOpacity`
-  height: 40px;
-  width: 40px;
-  border-radius: 20px;
-  background-color: rgba(255, 255, 255, 0.2);
-  align-items: center;
-  justify-content: center;
-  margin-top: 10px;
-`;
-
-const SearchButton = styled.TouchableOpacity`
-  height: 40px;
-  width: 40px;
-  border-radius: 20px;
-  background-color: rgba(255, 255, 255, 0.2);
-  align-items: center;
-  justify-content: center;
-  margin-top: 10px;
-`;
-
-const SearchContainer = styled.View`
-  margin-top: 10px;
-  background-color: #ffffff;
-  border-radius: 14px;
-  padding: 10px;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-`;
-
-const SearchInput = styled.TextInput`
-  flex: 1;
-  height: 40px;
-  background-color: #f3f4f6;
-  border-radius: 10px;
-  padding: 0 12px;
-  color: #111827;
-`;
-
-const TitleContainer = styled.View`
-  flex: 1;
-  margin-left: 10px;
-`;
+const styles = StyleSheet.create({
+  headerContainer: {
+    backgroundColor: '#e88f14',
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
+  },
+  headerContainerType1: {
+    padding: 10,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    zIndex: 1,
+  },
+  headerContainerType2: {
+    padding: 10,
+    paddingHorizontal: 20,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    zIndex: 1,
+  },
+  headerContainerType3: {
+    padding: 16,
+    paddingBottom: 12,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    zIndex: 2,
+  },
+  leftHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userBlock: {},
+  userName: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  userId: {
+    color: '#e9e6ff',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  bellWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dot: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#fa020bff',
+  },
+  titleRow: {
+    marginBottom: 14,
+  },
+  title: {
+    color: '#ffffff',
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  subtitle: {
+    color: '#e9e6ff',
+    fontSize: 12,
+    marginTop: 6,
+  },
+  filters: {
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    width: '100%',
+  },
+  input: {
+    flex: 1,
+    height: 40,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    color: '#111827',
+  },
+  searchBtn: {
+    height: 40,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: '#E88F14',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: Platform.OS === 'ios' ? 20 : 0,
+    width: '100%',
+  },
+  backNav: {
+    height: 40,
+    width: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  searchButton: {
+    height: 40,
+    width: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  searchContainer: {
+    marginTop: 10,
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    width: '100%',
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    color: '#111827',
+  },
+  titleContainer: {
+    flex: 1,
+    marginLeft: 10,
+  },
+});
 
 export default Header;
-
-// Usage Examples:
-// Type 1 (Default - without search bar):
-// jsx
-// <Header 
-//   type="type1"
-//   userName="Vishnuvardhan"
-//   userId="REF12345"
-//   onBellPress={() => console.log('Bell pressed')}
-//   hasNotification={true}
-// />
-// Type 2 (With search bar - opened):
-// jsx
-// <Header 
-//   type="type2"
-//   title="🔔 Sacred Temples"
-//   subtitle="Discover divine temples and book your spiritual journey with us"
-//   searchValue={searchQuery}
-//   onSearchChange={setSearchQuery}
-//   onSearchPress={handleSearch}
-// />
-// Type 3 (With search bar - toggleable):
-// jsx
-// <Header 
-//   type="type3"
-//   title="Book Seva"
-//   subtitle="Choose from available services"
-//   showBackButton={true}
-//   searchVisible={isSearchVisible}
-//   searchQuery={searchQuery}
-//   onSearchQueryChange={setSearchQuery}
-//   onToggleSearch={toggleSearch}
-//   onBackPress={handleBack}
-// />

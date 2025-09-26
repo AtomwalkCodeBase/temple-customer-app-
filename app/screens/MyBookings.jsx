@@ -6,25 +6,29 @@ import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from "expo-sharing";
 import { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Dimensions,
-    FlatList,
-    Image,
-    ImageBackground,
-    Linking,
-    Modal,
-    Platform,
-    RefreshControl,
-    ScrollView,
-    Share,
-    StatusBar,
-    StyleSheet,
-    TouchableOpacity
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Image,
+  ImageBackground,
+  Modal,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  Share,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import Toast from 'react-native-toast-message';
-import styled from 'styled-components/native';
+import BookingDetails from '../../components/BookingDetails';
+import Header from '../../components/Header';
 import ToastMsg from "../../components/ToastMsg";
 import { cancelBooking, getBookingList } from '../../services/productService';
+
 const { width } = Dimensions.get("window");
 const H_PADDING = 16;
 const CARD_W = Math.floor(width - H_PADDING * 2);
@@ -35,12 +39,12 @@ export default function Booking() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
-  const [qrModalVisible, setQrModalVisible] = useState(false);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [cancelRemarks, setCancelRemarks] = useState('');
   const [cancelling, setCancelling] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [bookingDetailsVisible, setBookingDetailsVisible] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -88,6 +92,22 @@ export default function Booking() {
       : `${hour === 0 ? 12 : hour}:${minutes} AM`;
   };
 
+  const handleShareDetails = () => {
+    if (onShareDetails) {
+      onShareDetails(booking);
+    }
+  };
+
+  const handleBookingClick = (booking) => {
+    setSelectedBooking(booking.bookingData);
+    setBookingDetailsVisible(true);
+  };
+  
+  const closeBookingDetails = () => {
+    setBookingDetailsVisible(false);
+    setSelectedBooking(null);
+  };
+
   const formatCurrency = (amount) => {
     return `₹${parseFloat(amount).toFixed(2)}`;
   };
@@ -111,18 +131,9 @@ export default function Booking() {
     }
   };
 
-  const openImage = (url) => {
-    if (url) {
-      Linking.openURL(url).catch(err => {
-        console.error('Failed to open image:', err);
-        ToastMsg("Failed to open image", "error");
-      });
-    }
-  };
-
   const showQRCode = (booking) => {
     setSelectedBooking(booking);
-    setQrModalVisible(true);
+    setBookingDetailsVisible(true);
   };
 
   const showCancelBooking = (booking) => {
@@ -246,146 +257,130 @@ export default function Booking() {
   };
 
   const renderBookingItem = ({ item }) => (
-    <Card>
-      <TopImage
+    <View style={styles.card}>
+      <ImageBackground 
         source={{ uri: item.service_data.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' }}
-        imageStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+        style={styles.topImage}
+        imageStyle={styles.topImageStyle}
       >
-        <ImageOverlay>
-          <TempleName>{item.service_data.temple_name}</TempleName>
-        </ImageOverlay>
-      </TopImage>
+        <View style={styles.imageOverlay}>
+          <Text style={styles.templeName}>{item.service_data.temple_name}</Text>
+        </View>
+      </ImageBackground>
       
-      <CardBody>
-        <ServiceName>{item.service_data.name}</ServiceName>
+      <View style={styles.cardBody}>
+        <Text style={styles.serviceName}>{item.service_data.name}</Text>
         
-        <DetailsGrid>
-          <DetailItem>
+        <View style={styles.detailsGrid}>
+          <View style={styles.detailItem}>
             <Ionicons name="calendar-outline" size={16} color="#5C6BC0" />
-            <DetailValue>{formatDate(item.booking_date)}</DetailValue>
-          </DetailItem>
+            <Text style={styles.detailValue}>{formatDate(item.booking_date)}</Text>
+          </View>
           
-          <DetailItem>
+          <View style={styles.detailItem}>
             <Ionicons name="time-outline" size={16} color="#5C6BC0" />
-            <DetailValue>
+            <Text style={styles.detailValue}>
               {formatTime(item.start_time)} - {formatTime(item.end_time)}
-            </DetailValue>
-          </DetailItem>
+            </Text>
+          </View>
           
-          <DetailItem>
+          <View style={styles.detailItem}>
             <Ionicons name="hourglass-outline" size={16} color="#5C6BC0" />
-            <DetailValue>{item.service_data.duration_minutes} mins</DetailValue>
-          </DetailItem>
+            <Text style={styles.detailValue}>{item.service_data.duration_minutes} mins</Text>
+          </View>
           
-          <DetailItem>
+          <View style={styles.detailItem}>
             <Ionicons name="people-outline" size={16} color="#5C6BC0" />
-            <DetailValue>{item.quantity} guests</DetailValue>
-          </DetailItem>
-        </DetailsGrid>
+            <Text style={styles.detailValue}>{item.quantity} guests</Text>
+          </View>
+        </View>
         
-        <BookingFooter>
-          <StatusBadge statusColor={getStatusColor(item.status)}>
-            <StatusText>{item.status_display}</StatusText>
-          </StatusBadge>
+        <View style={styles.bookingFooter}>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+            <Text style={styles.statusText}>{item.status_display}</Text>
+          </View>
           
-          <FooterRight>
-            <BookingPrice>{calculateTotal(item.quantity, item.unit_price)}</BookingPrice>
+          <View style={styles.footerRight}>
+            <Text style={styles.bookingPrice}>{calculateTotal(item.quantity, item.unit_price)}</Text>
             {(item.qr_image || item.booking_qrcode) && (
-              <QrButton onPress={() => showQRCode(item)}>
+              <TouchableOpacity style={styles.qrButton} onPress={() => showQRCode(item)}>
                 <Ionicons name="qr-code-outline" size={24} color="#5C6BC0" />
-              </QrButton>
+              </TouchableOpacity>
             )}
-          </FooterRight>
-        </BookingFooter>
+          </View>
+        </View>
         
-        <ActionButtons>
+        <View style={styles.actionButtons}>
           {item.status.toUpperCase() ==="B" && (
-            <CancelButton onPress={() => showCancelBooking(item)}>
+            <TouchableOpacity style={styles.cancelButton} onPress={() => showCancelBooking(item)}>
               <Ionicons name="close-circle-outline" size={18} color="#F44336" />
-              <CancelButtonText>Cancel Booking</CancelButtonText>
-            </CancelButton>
+              <Text style={styles.cancelButtonText}>Cancel Booking</Text>
+            </TouchableOpacity>
           )}
-        </ActionButtons>
+        </View>
         
-        <RefCode>Ref: {item.ref_code}</RefCode>
-      </CardBody>
-    </Card>
+        <Text style={styles.refCode}>Ref: {item.ref_code}</Text>
+      </View>
+    </View>
   );
 
   if (loading) {
     return (
-      <CenterContainer>
+      <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#E88F14" />
-        <LoadingText>Loading your bookings...</LoadingText>
-      </CenterContainer>
+        <Text style={styles.loadingText}>Loading your bookings...</Text>
+      </View>
     );
   }
 
   if (error) {
     return (
-      <CenterContainer>
+      <View style={styles.centerContainer}>
         <Ionicons name="alert-circle-outline" size={48} color="#F44336" />
-        <ErrorText>{error}</ErrorText>
-        <RetryButton onPress={fetchBookings}>
-          <RetryButtonText>Try Again</RetryButtonText>
-        </RetryButton>
-      </CenterContainer>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchBookings}>
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
     );
   }
 
   return (
-    <Screen edges={['top', 'left', 'right']}>
-      <StatusBarBackground />
+    <View style={styles.screen}>
+      <View style={styles.statusBarBackground} />
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       
-      <Header>
-        <Row>
-          {/* Left Column: Title + Subtitle */}
-          <TitleSubtitle>
-            <Title>📋 My Bookings</Title>
-            <Subtitle>Manage and track your spiritual journey</Subtitle>
-          </TitleSubtitle>
-          {/* Right Column: Search Icon */}
-          <SearchButton onPress={toggleSearch}>
-            <Ionicons 
-              name={searchVisible ? "close" : "search"} 
-              size={24} 
-              color="#FFF" 
-            />
-          </SearchButton>
-        </Row>
-        {/* Search bar appears below row when active */}
-        {searchVisible && (
-          <SearchContainer>
-            <SearchInput
-              placeholder="Search bookings..."
-              placeholderTextColor="#11080892"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              autoFocus={true}
-            />
-          </SearchContainer>
-        )}
-      </Header>
-      
+      <Header
+        type="type3"
+        showBackButton={true}
+        title="My Bookings"
+        subtitle="Manage and track your spiritual journey"
+        searchVisible={searchVisible}
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        onToggleSearch={toggleSearch}
+        paddingTop={30}
+      />
+
       {filteredBookings.length === 0 ? (
-        <CenterContainer>
-          <EmptyImage
+        <View style={styles.centerContainer}>
+          <Image 
+            style={styles.emptyImage}
             source={{ uri: 'https://images.unsplash.com/photo-1567495242264-fe2a4a3ca2f6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80' }}
           />
-          <EmptyText>
+          <Text style={styles.emptyText}>
             {searchQuery ? 'No matching bookings found' : 'No bookings yet'}
-          </EmptyText>
-          <EmptySubtext>
+          </Text>
+          <Text style={styles.emptySubtext}>
             {searchQuery ? 'Try a different search term' : 'Start exploring and book your next temple service!'}
-          </EmptySubtext>
-        </CenterContainer>
+          </Text>
+        </View>
       ) : (
-        <List
+        <FlatList
           data={filteredBookings}
           renderItem={renderBookingItem}
           keyExtractor={(item) => item.ref_code}
-          contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 }}
+          contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl 
               refreshing={refreshing} 
@@ -397,135 +392,60 @@ export default function Booking() {
           showsVerticalScrollIndicator={false}
         />
       )}
-      
-      {/* QR Code Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={qrModalVisible}
-        onRequestClose={() => setQrModalVisible(false)}
-      >
-        <ModalContainer>
-          <ModalContent>
-            <ModalHeader>
-              <ModalTitle>Booking Details</ModalTitle>
-              <TouchableOpacity onPress={() => setQrModalVisible(false)}>
-                <Ionicons name="close" size={24} color="#333" />
-              </TouchableOpacity>
-            </ModalHeader>
-            
-            {selectedBooking && (
-              <ScrollView contentContainerStyle={styles.modalBody}>
-                <ModalTempleName>{selectedBooking.service_data.temple_name}</ModalTempleName>
-                <ModalServiceName>{selectedBooking.service_data.name}</ModalServiceName>
-                
-                {(selectedBooking.qr_image || selectedBooking.booking_qrcode) ? (
-                  <QrContainer>
-                    <Image 
-                      source={{ uri: selectedBooking.qr_image || selectedBooking.booking_qrcode }} 
-                      style={styles.qrImage} 
-                      resizeMode="contain"
-                    />
-                  </QrContainer>
-                ) : (
-                  <NoQrContainer>
-                    <Ionicons name="qr-code-outline" size={64} color="#CCC" />
-                    <NoQrText>QR Code Not Available</NoQrText>
-                  </NoQrContainer>
-                )}
-                
-                <ModalDetails>
-                  <ModalDetailRow>
-                    <ModalDetailLabel>Reference Code:</ModalDetailLabel>
-                    <ModalDetailValue>{selectedBooking.ref_code}</ModalDetailValue>
-                  </ModalDetailRow>
-                  
-                  <ModalDetailRow>
-                    <ModalDetailLabel>Date:</ModalDetailLabel>
-                    <ModalDetailValue>{formatDate(selectedBooking.booking_date)}</ModalDetailValue>
-                  </ModalDetailRow>
-                  
-                  <ModalDetailRow>
-                    <ModalDetailLabel>Time:</ModalDetailLabel>
-                    <ModalDetailValue>
-                      {formatTime(selectedBooking.start_time)} - {formatTime(selectedBooking.end_time)}
-                    </ModalDetailValue>
-                  </ModalDetailRow>
-                  <ModalDetailRow>
-                    <ModalDetailLabel>Status:</ModalDetailLabel>
-                    <ModalStatusBadge statusColor={getStatusColor(selectedBooking.status)}>
-                      <ModalStatusText>{selectedBooking.status_display}</ModalStatusText>
-                    </ModalStatusBadge>
-                  </ModalDetailRow>
-                  <ModalDetailRow>
-                    <ModalDetailLabel>Total Amount:</ModalDetailLabel>
-                    <ModalDetailValue>
-                      {calculateTotal(selectedBooking.quantity, selectedBooking.unit_price)}
-                    </ModalDetailValue>
-                  </ModalDetailRow>
-                </ModalDetails>
-                
-                <ModalButtons>
-                  {(selectedBooking.qr_image || selectedBooking.booking_qrcode) && (
-                    <ModalButton style={styles.shareQrButton} onPress={downloadAndShareQR}>
-                      <Ionicons name="share-social-outline" size={20} color="#FFF" />
-                      <ModalButtonText>Share QR Code</ModalButtonText>
-                    </ModalButton>
-                  )}
-                  
-                  <ModalButton style={styles.shareDetailsButton} onPress={shareBookingDetails}>
-                    <Ionicons name="document-text-outline" size={20} color="#FFF" />
-                    <ModalButtonText>Share Details</ModalButtonText>
-                  </ModalButton>
-                </ModalButtons>
-              </ScrollView>
-            )}
-          </ModalContent>
-        </ModalContainer>
-      </Modal>
-      
-      {/* Cancel Booking Modal */}
+
+      <BookingDetails
+        visible={bookingDetailsVisible}
+        onClose={closeBookingDetails}
+        booking={selectedBooking}
+        onShareDetails={handleShareDetails}
+        formatDate={formatDate}
+        formatTime={formatTime}
+        calculateTotal={calculateTotal}
+        getStatusColor={getStatusColor}
+      />
+
       <Modal
         animationType="slide"
         transparent={true}
         visible={cancelModalVisible}
         onRequestClose={() => setCancelModalVisible(false)}
       >
-        <ModalContainer>
-          <ModalContent>
-            <ModalHeader>
-              <ModalTitle>Cancel Booking</ModalTitle>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Cancel Booking</Text>
               <TouchableOpacity onPress={() => setCancelModalVisible(false)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
-            </ModalHeader>
+            </View>
             
             {selectedBooking && (
               <ScrollView contentContainerStyle={styles.modalBody}>
-                <CancelWarning>
+                <Text style={styles.cancelWarning}>
                   <Ionicons name="warning" size={20} color="#FF9800" />
                   Are you sure you want to cancel this booking?
-                </CancelWarning>
+                </Text>
                 
-                <BookingInfo>
-                  <BookingInfoTitle>{selectedBooking.service_data.temple_name}</BookingInfoTitle>
-                  <BookingInfoSubtitle>{selectedBooking.service_data.name}</BookingInfoSubtitle>
+                <View style={styles.bookingInfo}>
+                  <Text style={styles.bookingInfoTitle}>{selectedBooking.service_data.temple_name}</Text>
+                  <Text style={styles.bookingInfoSubtitle}>{selectedBooking.service_data.name}</Text>
                   
-                  <BookingInfoDetails>
-                    <BookingInfoText>
+                  <View style={styles.bookingInfoDetails}>
+                    <Text style={styles.bookingInfoText}>
                       Date: {formatDate(selectedBooking.booking_date)}
-                    </BookingInfoText>
-                    <BookingInfoText>
+                    </Text>
+                    <Text style={styles.bookingInfoText}>
                       Time: {formatTime(selectedBooking.start_time)} - {formatTime(selectedBooking.end_time)}
-                    </BookingInfoText>
-                    <BookingInfoText>
+                    </Text>
+                    <Text style={styles.bookingInfoText}>
                       Reference: {selectedBooking.ref_code}
-                    </BookingInfoText>
-                  </BookingInfoDetails>
-                </BookingInfo>
-                <RemarksContainer>
-                  <RemarksLabel>Reason for cancellation (optional)</RemarksLabel>
-                  <RemarksInput
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.remarksContainer}>
+                  <Text style={styles.remarksLabel}>Reason for cancellation (optional)</Text>
+                  <TextInput
+                    style={styles.remarksInput}
                     placeholder="Please provide a reason for cancellation"
                     value={cancelRemarks}
                     onChangeText={setCancelRemarks}
@@ -533,526 +453,460 @@ export default function Booking() {
                     numberOfLines={4}
                     textAlignVertical="top"
                   />
-                </RemarksContainer>
-                <CancelModalButtons>
-                  <ModalButton style={styles.cancelButtonModal} onPress={() => setCancelModalVisible(false)} disabled={cancelling}>
-                    <ModalButtonText>Go Back</ModalButtonText>
-                  </ModalButton>
+                </View>
+                <View style={styles.cancelModalButtons}>
+                  <TouchableOpacity style={[styles.modalButton, styles.cancelButtonModal]} onPress={() => setCancelModalVisible(false)} disabled={cancelling}>
+                    <Text style={styles.modalButtonText}>Go Back</Text>
+                  </TouchableOpacity>
                   
-                  <ModalButton style={styles.confirmCancelButton} onPress={handleCancelBooking} disabled={cancelling}>
+                  <TouchableOpacity style={[styles.modalButton, styles.confirmCancelButton]} onPress={handleCancelBooking} disabled={cancelling}>
                     {cancelling ? (
                       <ActivityIndicator size="small" color="#FFF" />
                     ) : (
                       <>
                         <Ionicons name="close-circle-outline" size={20} color="#FFF" />
-                        <ModalButtonText>Confirm</ModalButtonText>
+                        <Text style={styles.modalButtonText}>Confirm</Text>
                       </>
                     )}
-                  </ModalButton>
-                </CancelModalButtons>
+                  </TouchableOpacity>
+                </View>
               </ScrollView>
             )}
-          </ModalContent>
-        </ModalContainer>
+          </View>
+        </View>
       </Modal>
-      
       <Toast />
-    </Screen>
+    </View>
   );
 }
-
-// Styled components with proper safe area and status bar handling
-const Screen = styled.SafeAreaView`
-  flex: 1;
-  background-color: #f6f7fb;
-`;
-
-const StatusBarBackground = styled.View`
-  height: ${Platform.OS === 'ios' ? 44 : StatusBar.currentHeight}px;
-  background-color: #E88F14;
-  width: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 1;
-`;
-
-const Header = styled.View`
-  padding: 16px;
-  padding-top: ${Platform.OS === 'ios' ? 60 : 16}px;
-  padding-bottom: 12px;
-  background-color: #E88F14;
-  border-bottom-left-radius: 18px;
-  border-bottom-right-radius: 18px;
-  z-index: 2;
-`;
-
-const Row = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const TitleSubtitle = styled.View`
-  flex: 1;
-`;
-
-const Title = styled.Text`
-  color: #ffffff;
-  font-size: 24px;
-  font-weight: 800;
-  margin-top: 8px;
-`;
-
-const Subtitle = styled.Text`
-  color: #e9e6ff;
-  font-size: 12px;
-  margin-top: 6px;
-`;
-
-const SearchButton = styled.TouchableOpacity`
-  padding: 8px;
-`;
-
-const SearchContainer = styled.View`
-  margin-top: 10px;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  padding: 8px;
-`;
-
-const SearchInput = styled.TextInput`
-  color: #FFF;
-  font-size: 16px;
-`;
-
-const List = styled(FlatList).attrs(() => ({}))``;
-
-const Card = styled.View`
-  width: ${CARD_W}px;
-  background-color: #ffffff;
-  border-radius: 16px;
-  margin-bottom: 16px;
-  margin-horizontal: ${H_PADDING}px;
-  ${Platform.select({
-    ios: `
-      shadow-color: #000;
-      shadow-opacity: 0.08;
-      shadow-radius: 12px;
-      shadow-offset: 0px 4px;
-    `,
-    android: `
-      elevation: 3;
-    `,
-  })}
-`;
-
-const TopImage = styled(ImageBackground)`
-  height: 160px;
-  width: 100%;
-`;
-
-const ImageOverlay = styled.View`
-  flex: 1;
-  background-color: rgba(0, 0, 0, 0.3);
-  justify-content: flex-end;
-  padding: 16px;
-`;
-
-const TempleName = styled.Text`
-  color: #FFF;
-  font-size: 20px;
-  font-weight: 700;
-`;
-
-const CardBody = styled.View`
-  padding: 16px;
-`;
-
-const ServiceName = styled.Text`
-  font-size: 18px;
-  font-weight: 700;
-  color: #2D3436;
-  margin-bottom: 12px;
-`;
-
-const DetailsGrid = styled.View`
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  margin-bottom: 16px;
-`;
-
-const DetailItem = styled.View`
-  flex-direction: row;
-  align-items: center;
-  width: 48%;
-  margin-bottom: 8px;
-`;
-
-const DetailValue = styled.Text`
-  font-size: 14px;
-  color: #666;
-  margin-left: 6px;
-`;
-
-const BookingFooter = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-`;
-
-const StatusBadge = styled.View`
-  padding-horizontal: 10px;
-  padding-vertical: 4px;
-  border-radius: 8px;
-  background-color: ${props => props.statusColor};
-`;
-
-const StatusText = styled.Text`
-  color: #FFF;
-  font-size: 12px;
-  font-weight: 600;
-`;
-
-const FooterRight = styled.View`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const BookingPrice = styled.Text`
-  font-size: 18px;
-  font-weight: 700;
-  color: #6C63FF;
-  margin-right: 12px;
-`;
-
-const QrButton = styled.TouchableOpacity`
-  padding: 8px;
-  border-radius: 12px;
-  background-color: #F0F0FF;
-`;
-
-const ActionButtons = styled.View`
-  margin-top: 12px;
-`;
-
-const CancelButton = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
-  background-color: #FFF;
-  border-width: 1px;
-  border-color: #F44336;
-  border-radius: 8px;
-  margin-bottom: 8px;
-`;
-
-const CancelButtonText = styled.Text`
-  color: #F44336;
-  font-weight: 600;
-  margin-left: 6px;
-`;
-
-const RefCode = styled.Text`
-  font-size: 12px;
-  color: #999;
-  margin-top: 8px;
-  font-style: italic;
-`;
-
-const CenterContainer = styled.View`
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-`;
-
-const LoadingText = styled.Text`
-  margin-top: 12px;
-  font-size: 16px;
-  color: #666;
-`;
-
-const EmptyImage = styled.Image`
-  width: 200px;
-  height: 200px;
-  border-radius: 100px;
-  margin-bottom: 20px;
-`;
-
-const EmptyText = styled.Text`
-  font-size: 22px;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 8px;
-`;
-
-const EmptySubtext = styled.Text`
-  font-size: 16px;
-  color: #666;
-  text-align: center;
-  padding-horizontal: 20px;
-`;
-
-const ErrorText = styled.Text`
-  font-size: 16px;
-  color: #F44336;
-  margin-bottom: 16px;
-  text-align: center;
-  margin-top: 12px;
-`;
-
-const RetryButton = styled.TouchableOpacity`
-  background-color: #E88F14;
-  padding-horizontal: 24px;
-  padding-vertical: 12px;
-  border-radius: 12px;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const RetryButtonText = styled.Text`
-  color: #FFF;
-  font-weight: 600;
-  margin-left: 8px;
-`;
-
-// Modal Styles
-const ModalContainer = styled.View`
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.5);
-`;
-
-const ModalContent = styled.View`
-  background-color: white;
-  border-radius: 20px;
-  padding: 20px;
-  width: 90%;
-  max-height: 80%;
-  ${Platform.select({
-    ios: `
-      shadow-color: #000;
-      shadow-offset: { width: 0, height: 2 };
-      shadow-opacity: 0.25;
-      shadow-radius: 4;
-    `,
-    android: `
-      elevation: 5;
-    `,
-  })}
-`;
-
-const ModalHeader = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-`;
-
-const ModalTitle = styled.Text`
-  font-size: 24px;
-  font-weight: 700;
-  color: #333;
-`;
-
-const ModalTempleName = styled.Text`
-  font-size: 18px;
-  font-weight: 700;
-  color: #333;
-  text-align: center;
-  margin-bottom: 4px;
-`;
-
-const ModalServiceName = styled.Text`
-  font-size: 16px;
-  color: #6C63FF;
-  text-align: center;
-  margin-bottom: 20px;
-`;
-
-const QrContainer = styled.View`
-  padding: 20px;
-  background-color: #FFF;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  ${Platform.select({
-    ios: `
-      shadow-color: #000;
-      shadow-offset: { width: 0, height: 2 };
-      shadow-opacity: 0.1;
-      shadow-radius: 4;
-    `,
-    android: `
-      elevation: 2;
-    `,
-  })}
-`;
-
-const NoQrContainer = styled.View`
-  padding: 30px;
-  background-color: #F8F9FA;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  align-items: center;
-`;
-
-const NoQrText = styled.Text`
-  margin-top: 10px;
-  color: #999;
-  font-size: 14px;
-`;
-
-const ModalDetails = styled.View`
-  width: 100%;
-  margin-bottom: 20px;
-`;
-
-const ModalDetailRow = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  padding-vertical: 8px;
-  border-bottom-width: 1px;
-  border-bottom-color: #EEE;
-`;
-
-const ModalDetailLabel = styled.Text`
-  font-size: 14px;
-  color: #666;
-  font-weight: 500;
-`;
-
-const ModalDetailValue = styled.Text`
-  font-size: 14px;
-  color: #333;
-  font-weight: 600;
-`;
-
-const ModalStatusBadge = styled.View`
-  padding-horizontal: 10px;
-  padding-vertical: 4px;
-  border-radius: 8px;
-  background-color: ${props => props.statusColor};
-`;
-
-const ModalStatusText = styled.Text`
-  color: #FFF;
-  font-size: 12px;
-  font-weight: 600;
-`;
-
-const ModalButtons = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  width: 100%;
-  gap: 10px;
-`;
-
-const ModalButton = styled.TouchableOpacity`
-  flex: 1;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  padding-vertical: 12px;
-  border-radius: 12px;
-`;
-
-const ModalButtonText = styled.Text`
-  color: #FFF;
-  font-weight: 600;
-  margin-left: 8px;
-`;
-
-// Cancel Modal Styles
-const CancelWarning = styled.Text`
-  flex-direction: row;
-  align-items: center;
-  background-color: #FFF3E0;
-  padding: 15px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  color: #FF9800;
-  font-weight: 600;
-`;
-
-const BookingInfo = styled.View`
-  background-color: #F8F9FA;
-  padding: 15px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-`;
-
-const BookingInfoTitle = styled.Text`
-  font-size: 16px;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 4px;
-`;
-
-const BookingInfoSubtitle = styled.Text`
-  font-size: 14px;
-  color: #6C63FF;
-  margin-bottom: 12px;
-`;
-
-const BookingInfoDetails = styled.View`
-  gap: 4px;
-`;
-
-const BookingInfoText = styled.Text`
-  font-size: 14px;
-  color: #666;
-`;
-
-const RemarksContainer = styled.View`
-  margin-bottom: 20px;
-  width: 100%;
-`;
-
-const RemarksLabel = styled.Text`
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
-`;
-
-const RemarksInput = styled.TextInput`
-  border-width: 1px;
-  border-color: #DDD;
-  border-radius: 12px;
-  padding: 15px;
-  font-size: 14px;
-  min-height: 100px;
-  text-align-vertical: top;
-`;
-
-const CancelModalButtons = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  width: 100%;
-  gap: 10px;
-`;
-
-// Keep some StyleSheet styles for specific properties
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#f6f7fb',
+  },
+  statusBarBackground: {
+    height: Platform.OS === 'ios' ? 44 : StatusBar.currentHeight,
+    backgroundColor: '#E88F14',
+    width: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    zIndex: 1,
+  },
+  header: {
+    padding: 16,
+    paddingTop: Platform.OS === 'ios' ? 60 : 16,
+    paddingBottom: 12,
+    backgroundColor: '#E88F14',
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
+    zIndex: 2,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  titleSubtitle: {
+    flex: 1,
+  },
+  title: {
+    color: '#ffffff',
+    fontSize: 24,
+    fontWeight: '800',
+    marginTop: 8,
+  },
+  subtitle: {
+    color: '#e9e6ff',
+    fontSize: 12,
+    marginTop: 6,
+  },
+  searchButton: {
+    padding: 8,
+  },
+  searchContainer: {
+    marginTop: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 8,
+    padding: 8,
+  },
+  searchInput: {
+    color: '#FFF',
+    fontSize: 16,
+  },
+  listContent: {
+    paddingTop: 12,
+    paddingBottom: 24,
+  },
+  card: {
+    width: CARD_W,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    marginBottom: 16,
+    marginHorizontal: H_PADDING,
+    overflow: "hidden", 
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 4 },
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  topImage: {
+    height: 160,
+    width: '100%',
+  },
+  topImageStyle: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  imageOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'flex-end',
+    padding: 16,
+  },
+  templeName: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  cardBody: {
+    padding: 16,
+  },
+  serviceName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2D3436',
+    marginBottom: 12,
+  },
+  detailsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '48%',
+    marginBottom: 8,
+  },
+  detailValue: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 6,
+  },
+  bookingFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  statusText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  footerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bookingPrice: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#6C63FF',
+    marginRight: 12,
+  },
+  qrButton: {
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: '#F0F0FF',
+  },
+  actionButtons: {
+    marginTop: 12,
+  },
+  cancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 10,
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#F44336',
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  cancelButtonText: {
+    color: '#F44336',
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  refCode: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  centerContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#666',
+  },
+  emptyImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    marginBottom: 20,
+  },
+  emptyText: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#F44336',
+    marginBottom: 16,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  retryButton: {
+    backgroundColor: '#E88F14',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  retryButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    width: '90%',
+    maxHeight: '80%',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#333',
+  },
   modalBody: {
     alignItems: 'center',
+  },
+  modalTempleName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  modalServiceName: {
+    fontSize: 16,
+    color: '#6C63FF',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  qrContainer: {
+    padding: 20,
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    marginBottom: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   qrImage: {
     width: 200,
     height: 200,
     borderRadius: 8,
   },
+  noQrContainer: {
+    padding: 30,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  noQrText: {
+    marginTop: 10,
+    color: '#999',
+    fontSize: 14,
+  },
+  modalDetails: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  modalDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+  },
+  modalDetailLabel: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  modalDetailValue: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '600',
+  },
+  modalStatusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  modalStatusText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: 10,
+  },
+  modalButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  modalButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
+    marginLeft: 8,
+  },
   shareQrButton: {
     backgroundColor: '#6C63FF',
   },
   shareDetailsButton: {
     backgroundColor: '#4CAF50',
+  },
+  cancelWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 20,
+    color: '#FF9800',
+    fontWeight: '600',
+  },
+  bookingInfo: {
+    backgroundColor: '#F8F9FA',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  bookingInfoTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 4,
+  },
+  bookingInfoSubtitle: {
+    fontSize: 14,
+    color: '#6C63FF',
+    marginBottom: 12,
+  },
+  bookingInfoDetails: {
+    gap: 4,
+  },
+  bookingInfoText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  remarksContainer: {
+    marginBottom: 20,
+    width: '100%',
+  },
+  remarksLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  remarksInput: {
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 12,
+    padding: 15,
+    fontSize: 14,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  cancelModalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: 10,
   },
   cancelButtonModal: {
     backgroundColor: '#9E9E9E',

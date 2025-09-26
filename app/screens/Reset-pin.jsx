@@ -1,6 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BlurView } from "expo-blur";
-import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -12,6 +11,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import Button from "../../components/Button";
 import ToastMsg from "../../components/ToastMsg";
 import { customerSetPin } from "../../services/productService";
 
@@ -122,24 +122,12 @@ export default function ResetPin() {
               {/* Error message */}
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-              <TouchableOpacity
-                style={styles.primaryBtn}
+              <Button
+                title="Update PIN"
                 onPress={handleSetPin}
-                disabled={loading}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={["#eacc0cff", "#dc6326ff"]}
-                  style={styles.primaryGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Text style={styles.primaryText}>
-                    {loading ? "Updating..." : "Update PIN"}
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-
+                size="large"
+                width="100%"
+              />
 
               <TouchableOpacity
                 onPress={() => router.back()}

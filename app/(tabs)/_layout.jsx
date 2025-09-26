@@ -10,7 +10,6 @@ export default function TabLayout() {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.statusBarBackground} />
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -43,17 +42,7 @@ export default function TabLayout() {
               <MaterialIcons name="temple-hindu" color={color} size={size} />
             ),
           }}
-        />
-        {/* <Tabs.Screen
-          name="my-booking"
-          options={{
-            title: 'My Bookings',
-            tabBarIcon: ({ color, size }) => (
-              <FontAwesome5 name="calendar-check" color={color} size={size} />
-            ),
-          }}
-        /> */}
-        
+        />        
         <Tabs.Screen
           name="profile"
           options={{
@@ -68,7 +57,6 @@ export default function TabLayout() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

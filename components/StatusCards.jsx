@@ -1,99 +1,130 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Platform } from 'react-native';
-import styled from 'styled-components/native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const StatusCards = ({ stats, onAddNew }) => {
   return (
     <>
-      <SectionHeader>
-        <SectionTitle>Your Bookings</SectionTitle>
-        <AddNew activeOpacity={0.85} onPress={onAddNew}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Your Bookings</Text>
+        <TouchableOpacity style={styles.addNewButton} activeOpacity={0.85} onPress={onAddNew}>
           <Ionicons name="add-circle-outline" size={16} color="#3a7bd5" />
-          <AddNewText>Add new</AddNewText>
-        </AddNew>
-      </SectionHeader>
-      <StatsRow>
-        <StatCard bg="#7b61ff">
-          <StatNumber>{stats.total}</StatNumber>
-          <StatLabel>Total Bookings</StatLabel>
-        </StatCard>
-        <StatCard bg="#ff7066">
-          <StatNumber>{stats.active}</StatNumber>
-          <StatLabel>Active Bookings</StatLabel>
-        </StatCard>
-        <StatCard bg="#d79b2d">
-          <StatNumber>{stats.completed}</StatNumber>
-          <StatLabel>Completed</StatLabel>
-        </StatCard>
-      </StatsRow>
+          <Text style={styles.addNewText}>Add new</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.statsRow}>
+        <View style={[styles.statCard, { backgroundColor: '#7b61ff' }]}>
+          <Text style={styles.statNumber}>{stats.total}</Text>
+          <Text style={styles.statLabel}>Total Bookings</Text>
+          <View style={[styles.iconContainer, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+            <Ionicons name="calendar-outline" size={20} color="#ffffff" />
+          </View>
+        </View>
+        <View style={[styles.statCard, { backgroundColor: '#ff7066' }]}>
+          <Text style={styles.statNumber}>{stats.active}</Text>
+          <Text style={styles.statLabel}>Active Bookings</Text>
+          <View style={[styles.iconContainer, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+            <Ionicons name="time-outline" size={20} color="#ffffff" />
+          </View>
+        </View>
+        <View style={[styles.statCard, { backgroundColor: '#d79b2d' }]}>
+          <Text style={styles.statNumber}>{stats.completed}</Text>
+          <Text style={styles.statLabel}>Completed</Text>
+          <View style={[styles.iconContainer, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+            <Ionicons name="checkmark-done-outline" size={20} color="#ffffff" />
+          </View>
+        </View>
+      </View>
     </>
   );
 };
 
-// Styled components
-const SectionHeader = styled.View`
-  margin: 10px 20px 10px 20px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const SectionTitle = styled.Text`
-  font-size: 18px;
-  font-weight: 800;
-  color: #1b1e28;
-`;
-
-const AddNew = styled.TouchableOpacity`
-  padding: 8px 12px;
-  border-radius: 12px;
-  background-color: #eef7ff;
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-`;
-
-const AddNewText = styled.Text`
-  color: #3a7bd5;
-  font-weight: 700;
-`;
-
-const StatsRow = styled.View`
-  margin: 6px 20px 6px 20px;
-  flex-direction: row;
-  gap: 14px;
-`;
-
-const StatCard = styled.View`
-  flex: 1;
-  height: 110px;
-  border-radius: 16px;
-  background-color: ${(p) => p.bg || "#ffffff"};
-  padding: 14px;
-  ${Platform.select({
-    ios: `
-      shadow-color: #000;
-      shadow-opacity: 0.06;
-      shadow-radius: 10px;
-      shadow-offset: 0px 4px;
-    `,
-    android: `
-      elevation: 2;
-    `,
-  })}
-`;
-
-const StatNumber = styled.Text`
-  color: #ffffff;
-  font-size: 28px;
-  font-weight: 800;
-`;
-
-const StatLabel = styled.Text`
-  margin-top: 8px;
-  color: #ffffff;
-  font-weight: 600;
-  opacity: 0.9;
-`;
+const styles = StyleSheet.create({
+  sectionHeader: {
+    margin: 20,
+    marginBottom: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#1b1e28',
+    letterSpacing: -0.5,
+  },
+  addNewButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#eef7ff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    shadowColor: '#3a7bd5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  addNewText: {
+    color: '#3a7bd5',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  statsRow: {
+    marginHorizontal: 20,
+    marginBottom: 10,
+    flexDirection: 'row',
+    gap: 16,
+  },
+  statCard: {
+    flex: 1,
+    height: 130,
+    borderRadius: 20,
+    padding: 18,
+    position: 'relative',
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 6 },
+      },
+      android: {
+        elevation: 8,
+        shadowColor: '#000',
+      },
+    }),
+  },
+  statNumber: {
+    color: '#ffffff',
+    fontSize: 32,
+    fontWeight: '900',
+    marginBottom: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  statLabel: {
+    color: '#ffffff',
+    fontWeight: '600',
+    opacity: 0.95,
+    fontSize: 13,
+    letterSpacing: 0.3,
+  },
+  iconContainer: {
+    position: 'absolute',
+    bottom: -8,
+    right: -8,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: 0.8,
+    transform: [{ rotate: '15deg' }],
+  },
+});
 
 export default StatusCards;

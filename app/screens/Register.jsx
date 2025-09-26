@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Button from '../../components/Button';
 import TextField from '../../components/TextField';
 import { customerRegister } from '../../services/authService';
 
@@ -104,24 +105,13 @@ export default function RegisterScreen() {
 
                   {/* 🔹 Error message */}
                   {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-                  <TouchableOpacity
-                    style={styles.primaryBtn}
+                  <Button
+                    title="Create Account"
                     onPress={onRegister}
-                    disabled={loading}
-                    activeOpacity={0.8}
-                  >
-                    <LinearGradient
-                      colors={['#eacc0cff', '#dc6326ff']}
-                      style={styles.primaryGradient}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                    >
-                      <Text style={styles.primaryText}>
-                        {loading ? 'Creating Account...' : 'Create Account'}
-                      </Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
+                    width="100%"
+                    loading={loading}
+                    loadingText="Creating Account..."
+                  />
 
                   <Text style={styles.registerLine}>
                     Already have an account?{' '}

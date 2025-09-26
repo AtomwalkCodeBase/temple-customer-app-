@@ -12,25 +12,22 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import Button from "../components/Button";
 
 const { height: screenHeight } = Dimensions.get("window");
 
 export default function Index() {
   const [checking, setChecking] = useState(true);
-
   const [fontsLoaded] = useFonts({
     PlayfairDisplay: require("../assets/fonts/PlayfairDisplay-Bold.ttf"),
   });
-
   useEffect(() => {
     (async () => {
       try {
         const user = await AsyncStorage.getItem("user");
         if (user) {
-          // ✅ Already logged in → go directly to choose-login
           router.replace("/screens/Choose-login");
           return;
         }
@@ -41,8 +38,6 @@ export default function Index() {
       }
     })();
   }, []);
-
-  // ⏳ Show loader while checking AsyncStorage or fonts
   if (checking || !fontsLoaded) {
     return (
       <View style={styles.loading}>
@@ -50,8 +45,6 @@ export default function Index() {
       </View>
     );
   }
-
-  // 👇 Show WelcomeScreen only if user is new
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
@@ -103,36 +96,23 @@ export default function Index() {
             </View>
 
             <View style={styles.actions}>
-              {/* Login Button */}
-              <TouchableOpacity
-                style={styles.primaryBtn}
+              
+              <Button
+                title="Login"
                 onPress={() => router.push("/screens/Login")}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={["#eacc0cff", "#dc6326ff"]}
-                  style={styles.primaryGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Text style={styles.primaryText}>Login</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+                size="large"
+                width="100%"
+              />
 
-              <LinearGradient
+              <Button
+                title="Create Account"
+                onPress={() => router.push("/screens/Register")}
                 colors={["#eacc0cff", "#dc6326ff"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.outlineGradient}
-              >
-                <TouchableOpacity
-                  style={styles.outlineBtnInner}
-                  onPress={() => router.push("/screens/Register")}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.outlineText}>Create Account</Text>
-                </TouchableOpacity>
-              </LinearGradient>
+                size="large"
+                variant="outline"
+                width="100%"
+                marginTop={0}
+              />
             </View>
           </View>
         </View>
@@ -152,8 +132,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FAFBFC'
   },
-
-  // Top Section
   topSection: {
     height: screenHeight * 0.58,
     overflow: 'hidden',
@@ -179,7 +157,6 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
   },
-
   topContent: {
     alignItems: 'center',
     paddingHorizontal: 24,
@@ -195,8 +172,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 12,
   },
-
-  // Brand Text
   brandContainer: {
     alignItems: 'center',
   },
@@ -220,8 +195,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginTop: 10,
   },
-
-  // Bottom Section
   bottomSection: {
     flex: 1,
     backgroundColor: '#FFFFFF',
@@ -263,8 +236,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     paddingHorizontal: 8,
   },
-
-  // Buttons
   actions: {
     gap: 16,
     width: '100%',
@@ -290,8 +261,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-
-  // Gradient Border Button
   outlineGradient: {
     borderRadius: 16,
     padding: 2,

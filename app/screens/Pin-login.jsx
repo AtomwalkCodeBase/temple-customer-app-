@@ -114,7 +114,7 @@ export default function PinLogin() {
               <Text style={styles.registerLine}>
                 <Text
                   style={styles.registerLink}
-                  onPress={() => router.replace("/screens/Login")}
+                  onPress={() => router.replace("/screens/Choose-login")}
                 >
                   ← Back to Login Options
                 </Text>
