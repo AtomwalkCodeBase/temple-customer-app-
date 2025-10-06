@@ -1,6 +1,5 @@
-import { customer_set_pin, get_booking_list, GITHUB_PANCHANG_BASE_URL, process_booking_data, temple_list, temple_services_list } from "./constantService";
+import { customer_set_pin, get_booking_list, GITHUB_PANCHANG_BASE_URL, process_booking_data, process_booking_payment, temple_list, temple_services_list } from "./constantService";
 import { authAxios, authAxiosPost } from "./HttpMethod";
-
 
 
 export function getTempleList() {
@@ -65,4 +64,20 @@ export function getPanchangData(region, odiaType = null, year = null, month = nu
         })
         .then(data => ({ status: 200, data }))
         .catch(error => ({ status: 500, message: error.message }));
+}
+
+export async function getPaymentStatus(refCode) {
+    console.log("Processing payment for:", refCode);
+
+    const formData = new FormData();
+    formData.append("ref_code", refCode);
+
+    try {
+        const response = await authAxiosPost(process_booking_payment, formData);
+        console.log("Payment response:", response);
+        return response;
+    } catch (error) {
+        console.error("Error in processPayment:", error);
+        throw error;
+    }
 }

@@ -198,6 +198,9 @@ const styles = StyleSheet.create({
   },
   cardBody: {
     padding: 12,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    flex: 1,
   },
   title: {
     fontSize: 15,

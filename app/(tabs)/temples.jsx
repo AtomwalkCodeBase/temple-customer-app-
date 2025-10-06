@@ -140,6 +140,7 @@ const onEvents = () => {
       rating={item.rating}
       timings={item.timings}
       onBookPress={() => openPopup(item)}
+      bookButtonText="Select Service"
       width={CARD_W}
     />
   );
@@ -160,6 +161,7 @@ const onEvents = () => {
       <Header
         type="type2"
         userName="Vishnuvardhan"
+        subtitle="Discover divine temples and book your spiritual journey with us"
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         onSearchPress={handleSearch}

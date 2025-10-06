@@ -50,64 +50,61 @@ export default function Button({
   const sizeStyles = getSizeStyles();
 
   if (variant === "outline") {
-    return (
-      <View style={[
-        styles.outlineGradient,
-        { 
-          borderRadius: sizeStyles.borderRadius,
-          width: width || 'auto',
-          marginTop: sizeStyles.marginTop,
-        }
-      ]}>
-        <LinearGradient
-          colors={colors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[
-            styles.gradientBase,
-            { borderRadius: sizeStyles.borderRadius }
-          ]}
-        >
-          <TouchableOpacity
-            onPress={onPress}
-            activeOpacity={0.7}
-            disabled={disabled || loading}
-            style={[
-              styles.outlineBtnInner,
-              { 
-                borderRadius: Math.max(sizeStyles.borderRadius - 2, 8),
-                height: sizeStyles.height,
-              }
-            ]}
-          >
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator color={colors[1] || "#000"} />
-                {showLoadingText && (
-                  <Text style={[
-                    styles.outlineText,
-                    { fontSize: sizeStyles.fontSize },
-                    textStyle,
-                    { marginLeft: 8 }
-                  ]}>
-                    {displayText}
-                  </Text>
-                )}
-              </View>
-            ) : (
-              <Text style={[
-                styles.outlineText,
-                { fontSize: sizeStyles.fontSize },
-                textStyle
-              ]}>
+  return (
+    <LinearGradient
+      colors={colors}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{
+        borderRadius: sizeStyles.borderRadius,
+        marginTop: sizeStyles.marginTop,
+        width: width || "auto",
+        padding: 2, // border thickness
+      }}
+    >
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.7}
+        disabled={disabled || loading}
+        style={{
+          borderRadius: sizeStyles.borderRadius - 2,
+          backgroundColor: "#fff", // inner button background
+          alignItems: "center",
+          justifyContent: "center",
+          height: sizeStyles.height,
+          paddingHorizontal: 16,
+        }}
+      >
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator color={colors[1] || "#000"} />
+            {showLoadingText && (
+              <Text
+                style={[
+                  styles.outlineText,
+                  { fontSize: sizeStyles.fontSize, color: colors[1], marginLeft: 8 },
+                  textStyle,
+                ]}
+              >
                 {displayText}
               </Text>
             )}
-          </TouchableOpacity>
-        </LinearGradient>
-      </View>
-    );
-  }
+          </View>
+        ) : (
+          <Text
+            style={[
+              styles.outlineText,
+              { fontSize: sizeStyles.fontSize, color: colors[1] },
+              textStyle,
+            ]}
+          >
+            {displayText}
+          </Text>
+        )}
+      </TouchableOpacity>
+    </LinearGradient>
+  );
+}
 
   return (
     <TouchableOpacity
@@ -193,6 +190,7 @@ const styles = StyleSheet.create({
   },
   outlineGradient: {
     overflow: "hidden",
+    height:"30%",
   },
   gradientBase: {
     width: "100%",

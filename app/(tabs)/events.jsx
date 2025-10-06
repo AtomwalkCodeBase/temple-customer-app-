@@ -1,24 +1,25 @@
-import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
   FlatList,
-  Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View
 } from 'react-native';
-import { Calendar } from 'react-native-calendars';
 import Cards from "../../components/Cards";
 import Header from '../../components/Header';
-import Loader from '../../components/Loader';
 import ToastMsg from '../../components/ToastMsg';
-import { getBookingList, getTempleServiceList, processBooking } from '../../services/productService';
+import { getBookingList, getPaymentStatus, getTempleServiceList, processBooking } from '../../services/productService';
+import CalendarModal from '../modals/CalendarModal';
+import OrderSummaryModal from '../modals/OrderSummaryModal';
+import PaymentOptionsModal from '../modals/PaymentOptionsModal';
+import PaymentStatusModal from '../modals/PaymentStatusModal';
+import ServiceDetails from '../modals/ServiceDetails';
 
 const { width } = Dimensions.get('window');
 const H_PADDING = 16;
@@ -40,6 +41,17 @@ const BookServicesScreen = () => {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [markedDates, setMarkedDates] = useState({});
   const [loadingDates, setLoadingDates] = useState(false);
+  const [orderSummaryVisible, setOrderSummaryVisible] = useState(false);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [paymentStatusVisible, setPaymentStatusVisible] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState(''); // 'success', 'failed', 'processing'
+  const [bookingRefCode, setBookingRefCode] = useState('');
+
+  const handleCloseStatusModal = () => {
+    setPaymentStatusVisible(false);
+    setPaymentStatus('');
+    setBookingRefCode('');
+  };
 
   useEffect(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -120,7 +132,7 @@ const BookServicesScreen = () => {
       const dates = {};
       allBookings.forEach((booking) => {
         const bookingDate = formatAPIDateToISO(booking.booking_date);
-        if (!bookingDate) {
+        if (booking.status !== "B") {
           return;
         }
         const bookingStart = parseTime(booking.start_time);
@@ -161,6 +173,73 @@ const BookServicesScreen = () => {
     } finally {
       setLoadingDates(false);
     }
+  };
+
+  const navigation = useNavigation();
+
+  const checkPaymentStatus = async (refCode) => {
+    try {
+      const response = await getPaymentStatus(refCode);
+      
+      if (response.status === 200 && response.data) {
+        const paymentStatus = response.data.payment?.status;
+        
+        switch (paymentStatus) {
+          case 'S': // Success
+            setPaymentStatus('success');
+            ToastMsg('Payment successful! Booking confirmed.', 'success');
+            break;
+          case 'F': // Failed
+            setPaymentStatus('failed');
+            // Cancel the booking since payment failed
+            await cancelBooking(refCode);
+            ToastMsg('Payment failed. Booking cancelled.', 'error');
+            break;
+          case 'P': // Processing
+            setPaymentStatus('processing');
+            // Cancel the booking since payment is still processing
+            await cancelBooking(refCode);
+            ToastMsg('Payment is still processing. Please try again.', 'warning');
+            break;
+          default:
+            setPaymentStatus('failed');
+            await cancelBooking(refCode);
+            ToastMsg('Payment status unknown. Please contact support.', 'error');
+            break;
+        }
+      } else {
+        setPaymentStatus('failed');
+        await cancelBooking(refCode);
+        ToastMsg('Failed to verify payment status.', 'error');
+      }
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+      setPaymentStatus('failed');
+      await cancelBooking(refCode);
+      ToastMsg('Error verifying payment. Please contact support.', 'error');
+    } finally {
+      setPaymentStatusVisible(true);
+    }
+  };
+
+  const cancelBooking = async (refCode) => {
+    try {
+      const customer_refcode = await AsyncStorage.getItem('ref_code');
+      const cancelData = {
+        cust_ref_code: customer_refcode,
+        call_mode: "CANCEL_BOOKING",
+        booking_ref_code: refCode,
+        cancel_reason: "Payment failed or processing"
+      };
+      await processBooking(cancelData);
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+    }
+  };
+
+  const handleProceedToPayment = () => {
+    setOrderSummaryVisible(false);
+    setPaymentModalVisible(true);
   };
 
   const formatAPIDateToISO = (apiDate) => {
@@ -209,8 +288,56 @@ const BookServicesScreen = () => {
     return `${day}-${month}-${year}`;
   };
 
-  const confirmBooking = async () => {
-    if (!selectedDate || !selectedVariation) {
+  const confirmDate = async () => {
+
+    setCalendarModalVisible(false);
+    setPaymentModalVisible(true);
+
+    // if (!selectedDate || !selectedVariation) {
+    //   ToastMsg('Please select a date to continue', 'error');
+    //   return;
+    // }
+    // if (markedDates[selectedDate]?.disabled) {
+    //   ToastMsg('This date is no longer available for booking.', 'error');
+    //   return;
+    // }
+    // const customer_refcode = await AsyncStorage.getItem('ref_code');
+    // try {
+    //   setBookingLoading(true);
+    //   const bookingData = {
+    //     cust_ref_code: customer_refcode,
+    //     call_mode: "ADD_BOOKING",
+    //     service_variation_id: selectedVariation.id,
+    //     booking_date: formatDateForAPI(selectedDate),
+    //     end_date: formatDateForAPI(selectedDate),
+    //     start_time: selectedVariation.start_time,
+    //     end_time: selectedVariation.end_time,
+    //     notes: `Booking for ${selectedService.name}`,
+    //     quantity: 1,
+    //     duration: selectedService.duration_minutes || 60,
+    //     unit_price: parseFloat(selectedVariation.base_price)
+    //   };
+    //   const response = await processBooking(bookingData);
+    //   if (response.status === 200) {
+    //     // Store the booking reference code for payment status check
+    //     const refCode = response.data.booking_ref_code; // Adjust based on your API response
+    //     setBookingRefCode(refCode);
+        
+    //     setCalendarModalVisible(false);
+    //     setOrderSummaryVisible(true);
+    //     ToastMsg('Booking created! Proceeding to payment...', 'success');
+    //   } else {
+    //     ToastMsg('Failed to process booking', 'error');
+    //   }
+    // } catch (error) {
+    //   ToastMsg(`Booking failed: ${error.message}`, 'error');
+    // } finally {
+    //   setBookingLoading(false);
+    // }
+  };
+
+  const handlePaymentComplete = async (result) => {
+     if (!selectedDate || !selectedVariation) {
       ToastMsg('Please select a date to continue', 'error');
       return;
     }
@@ -236,12 +363,13 @@ const BookServicesScreen = () => {
       };
       const response = await processBooking(bookingData);
       if (response.status === 200) {
+        // Store the booking reference code for payment status check
+        const refCode = response.data.booking_ref_code; // Adjust based on your API response
+        setBookingRefCode(refCode);
+        
         setCalendarModalVisible(false);
-        setSelectedService(null);
-        setSelectedVariation(null);
-        setSelectedDate(null);
-        setMarkedDates({});
-        ToastMsg('Your booking has been confirmed!', 'success');
+        setOrderSummaryVisible(true);
+        ToastMsg('Booking created! Proceeding to payment...', 'success');
       } else {
         ToastMsg('Failed to process booking', 'error');
       }
@@ -250,6 +378,23 @@ const BookServicesScreen = () => {
     } finally {
       setBookingLoading(false);
     }
+    setPaymentModalVisible(false);
+    setPaymentStatusVisible(true);
+
+    // if (result === null) {
+    //   // User went back, show order summary again
+    //   setOrderSummaryVisible(true);
+    //   return;
+    // }
+
+    // if (result && bookingRefCode) {
+    //   // Payment was attempted, check the actual status from API
+    //   await checkPaymentStatus(bookingRefCode);
+    // } else {
+    //   // No result or no booking reference
+    //   setPaymentStatus('failed');
+    //   setPaymentStatusVisible(true);
+    // }
   };
 
   const VariationItem = ({ variation }) => (
@@ -286,37 +431,20 @@ const BookServicesScreen = () => {
         price={minPrice}
         capacity={item.capacity}
         onBookPress={() => handleBookNow(item)}
+        bookButtonText="Select Package"
         width={CARD_W}
       />
     );
   };
 
-  // if (loading) {
-  //   return (
-  //     <View style={[styles.screen, { justifyContent: 'center', alignItems: 'center' }]}>
-  //       <ActivityIndicator size="large" color="#E88F14" />
-  //       <Text style={styles.loadingText}>Loading services...</Text>
-  //     </View>
-  //   );
-  // }
-
   if (loading) {
-  return (
-    <View style={[styles.screen, { justifyContent: 'center', alignItems: 'center' }]}>
-      {/* Option A: Simple Loader */}
-      <Loader size={100} color="#E88F14" text="Loading services..." showText={true} />
-
-      {/* Option B: Fancy Holographic Loader */}
-      {/* 
-      <HolographicLoader 
-        size={120} 
-        colors={['#E88F14', '#06B6D4', '#10B981']} 
-        text="Loading services..." 
-      /> 
-      */}
-    </View>
-  );
-}
+    return (
+      <View style={[styles.screen, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#E88F14" />
+        <Text style={styles.loadingText}>Loading services...</Text>
+      </View>
+    );
+  }
 
   if (error && services.length === 0) {
     return (
@@ -378,121 +506,70 @@ const BookServicesScreen = () => {
         />
       )}
 
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '60%', minHeight: 300 }]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Choose Package</Text>
-              <Pressable style={styles.closeButton} onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color="#666" />
-              </Pressable>
-            </View>
-            <Text style={styles.serviceModalName}>
-              {selectedService?.name}
-            </Text>
-            {selectedService?.service_variation_list?.length > 0 ? (
-              <FlatList
-                data={selectedService.service_variation_list}
-                renderItem={({ item }) => <VariationItem variation={item} />}
-                keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={{ padding: 20 }}
-              />
-            ) : (
-              <View style={styles.emptyPackageContainer}>
-                <Ionicons name="cube-outline" size={48} color="#CCC" />
-                <Text style={styles.emptyPackageText}>Packages will be available soon for booking</Text>
-              </View>
-            )}
-          </View>
-        </View>
-      </Modal>
+      <ServiceDetails
+        selectedService={selectedService}
+        modalVisible={modalVisible}
+        setModalVisible={setModalVisible}
+        handleVariationSelect={handleVariationSelect}
+      />
 
-      <Modal
+      <CalendarModal
         visible={calendarModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setCalendarModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '90%' }]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Date</Text>
-              <Pressable style={styles.closeButton} onPress={() => {
-                setCalendarModalVisible(false);
-                setMarkedDates({});
-              }}>
-                <Ionicons name="close" size={24} color="#666" />
-              </Pressable>
-            </View>
-            <Text style={styles.serviceModalName}>
-              {selectedService?.name} - {selectedVariation?.pricing_type_str}
-            </Text>
-            {loadingDates ? (
-              <View style={styles.calendarLoading}>
-                <ActivityIndicator size="large" color="#E88F14" />
-                <Text style={styles.loadingText}>Checking availability...</Text>
-              </View>
-            ) : (
-              <>
-                <Calendar
-                  minDate={new Date().toISOString().split('T')[0]}
-                  onDayPress={handleDateSelect}
-                  markedDates={{
-                    ...markedDates,
-                    ...(selectedDate && !markedDates[selectedDate] ? {
-                      [selectedDate]: { selected: true, selectedColor: '#E88F14' }
-                    } : {})
-                  }}
-                  theme={{
-                    selectedDayBackgroundColor: '#E88F14',
-                    todayTextColor: '#E88F14',
-                    arrowColor: '#E88F14',
-                    textDisabledColor: '#CCC',
-                  }}
-                  style={styles.calendar}
-                />
-                <View style={styles.bookingSummary}>
-                  <Text style={styles.summaryTitle}>Booking Summary</Text>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Date:</Text>
-                    <Text style={styles.summaryValue}>
-                      {selectedDate ? new Date(selectedDate).toLocaleDateString() : 'Not selected'}
-                    </Text>
-                  </View>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Time:</Text>
-                    <Text style={styles.summaryValue}>
-                      {selectedVariation?.start_time} - {selectedVariation?.end_time}
-                    </Text>
-                  </View>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Price:</Text>
-                    <Text style={styles.summaryValue}>
-                      {selectedVariation ? formatPrice(selectedVariation.base_price) : 'N/A'}
-                    </Text>
-                  </View>
-                </View>
-                <TouchableOpacity 
-                  style={styles.confirmButton(!selectedDate || markedDates[selectedDate]?.disabled || bookingLoading)}
-                  onPress={confirmBooking}
-                  disabled={!selectedDate || markedDates[selectedDate]?.disabled || bookingLoading}
-                >
-                  {bookingLoading ? (
-                    <ActivityIndicator color="#FFF" />
-                  ) : (
-                    <Text style={styles.confirmButtonText}>Confirm Booking</Text>
-                  )}
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </View>
-      </Modal>
+        onBack={() => {
+          setCalendarModalVisible(false);
+          setModalVisible(true);
+        }}
+        onClose={() => {
+          setCalendarModalVisible(false);
+          setMarkedDates({});
+        }}
+        selectedService={selectedService}
+        selectedVariation={selectedVariation}
+        loadingDates={loadingDates}
+        markedDates={markedDates}
+        selectedDate={selectedDate}
+        onDateSelect={handleDateSelect}
+        onConfirmDate={confirmDate}
+        bookingLoading={bookingLoading}
+        formatPrice={formatPrice}
+      />
+
+      <OrderSummaryModal
+        visible={orderSummaryVisible}
+        onBack={() => {
+          setOrderSummaryVisible(false);
+          setCalendarModalVisible(true);
+        }}
+        onClose={() => {
+          setOrderSummaryVisible(false);
+        }}
+        onProceedToPayment={handleProceedToPayment}
+        selectedService={selectedService}
+        selectedVariation={selectedVariation}
+        selectedDate={selectedDate}
+        formatPrice={formatPrice}
+        bookingLoading={bookingLoading}
+      />
+
+      <PaymentOptionsModal
+        visible={paymentModalVisible}
+        onBack={handlePaymentComplete}
+        selectedService={selectedService}
+        selectedVariation={selectedVariation}
+        selectedDate={selectedDate}
+        bookingRefCode={bookingRefCode} // Pass the ref code to payment modal if needed
+      />
+
+      <PaymentStatusModal
+        visible={paymentStatusVisible}
+        status="success"//{paymentStatus}  Use the actual status from API
+        onClose={handleCloseStatusModal}
+        message={paymentStatus === 'success' 
+          ? 'Your booking has been confirmed!' 
+          : paymentStatus === 'processing'
+          ? 'Payment is being processed. Please check your payment status later.'
+          : 'Payment failed. Please try again.'}
+      />
     </View>
   );
 };
@@ -502,6 +579,127 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f6f7fb',
   },
+  modalContentFull: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    width: '100%',
+    maxHeight: '92%',
+    alignSelf: 'stretch',
+  },
+  detailsScroll: {
+    paddingBottom: 16,
+  },
+  section: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  detailTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#2D3436',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 10,
+    flexWrap: 'wrap',
+  },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#FFF4E6',
+    borderRadius: 12,
+  },
+  pillText: {
+    fontSize: 12,
+    color: '#A04E00',
+    fontWeight: '600',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2D3436',
+    marginBottom: 10,
+  },
+  aboutText: {
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
+  },
+  galleryImage: {
+    width: Math.floor((width - 20 - 20 - 12) / 1.2),
+    height: 170,
+    borderRadius: 14,
+    marginRight: 12,
+    backgroundColor: '#EEE',
+  },
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8F9FA',
+    padding: 10,
+    borderRadius: 12,
+  },
+  priceLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  priceValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#E88F14',
+  },
+  priceNote: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  termsBox: {
+    backgroundColor: '#FFF7ED',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+  },
+  termsText: {
+    fontSize: 13,
+    color: '#4B5563',
+    lineHeight: 19,
+  },
+  policyGrid: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 12,
+  marginTop: 8,
+  },
+
+  policyCard: {
+    width: '100%',
+    backgroundColor: '#FFF7ED',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+    marginBottom: 12, // space between rows
+  },
+
+  policyCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2D3436',
+    marginBottom: 8,
+  },
+
+  policyCardText: {
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
+  },
+
   categoryContainer: {
     height: 80,
   },

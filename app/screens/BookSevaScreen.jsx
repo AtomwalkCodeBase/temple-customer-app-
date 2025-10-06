@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Dimensions,
   FlatList,
-  Modal,
   Platform,
   SafeAreaView,
   StatusBar,
@@ -16,11 +15,12 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { Calendar } from 'react-native-calendars';
 import Cards from '../../components/Cards';
 import Header from '../../components/Header';
 import ToastMsg from '../../components/ToastMsg';
 import { getBookingList, getTempleServiceList, processBooking } from '../../services/productService';
+import CalendarModal from '../modals/CalendarModal';
+import ServiceDetails from '../modals/ServiceDetails';
 
 const { width } = Dimensions.get('window');
 const H_PADDING = 16;
@@ -93,7 +93,7 @@ const BookSevaScreen = () => {
 
       allBookings.forEach((booking) => {
         const bookingDate = formatAPIDateToISO(booking.booking_date);
-        if (!bookingDate) {
+        if (booking.status !== "B") {
           return;
         }
         const bookingStart = parseTime(booking.start_time);
@@ -294,6 +294,7 @@ const BookSevaScreen = () => {
         title="Book Seva"
         subtitle="Choose from available services"
         showBackButton={true}
+        showSearchIcon={true}
         searchVisible={searchVisible}
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
@@ -332,136 +333,30 @@ const BookSevaScreen = () => {
         showsVerticalScrollIndicator={false}
       />
 
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '60%', minHeight: 300 }]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Choose Package</Text>
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Ionicons name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
+      <ServiceDetails
+        selectedService={selectedService}
+        modalVisible={modalVisible}
+        setModalVisible={setModalVisible}
+        handleVariationSelect={handleVariationSelect}
+      />
 
-            <Text style={styles.serviceModalName}>
-              {selectedService?.name}
-            </Text>
 
-            {selectedService?.service_variation_list?.length > 0 ? (
-              <FlatList
-                data={selectedService.service_variation_list}
-                renderItem={({ item }) => <VariationItem variation={item} />}
-                keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={{ padding: 20 }}
-              />
-            ) : (
-              <View style={styles.emptyPackageContainer}>
-                <Ionicons name="cube-outline" size={48} color="#CCC" />
-                <Text style={styles.emptyPackageText}>Packages will be available soon for booking</Text>
-              </View>
-            )}
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
+      <CalendarModal
         visible={calendarModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setCalendarModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '90%' }]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Date</Text>
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => {
-                  setCalendarModalVisible(false);
-                  setMarkedDates({});
-                }}
-              >
-                <Ionicons name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.serviceModalName}>
-              {selectedService?.name} - {selectedVariation?.pricing_type_str}
-            </Text>
-
-            {loadingDates ? (
-              <View style={styles.calendarLoading}>
-                <ActivityIndicator size="large" color="#E88F14" />
-                <Text style={styles.loadingText}>Checking availability...</Text>
-              </View>
-            ) : (
-              <>
-                <Calendar
-                  minDate={new Date().toISOString().split('T')[0]}
-                  onDayPress={handleDateSelect}
-                  markedDates={{
-                    ...markedDates,
-                    ...(selectedDate && !markedDates[selectedDate] ? {
-                      [selectedDate]: { selected: true, selectedColor: '#E88F14' }
-                    } : {})
-                  }}
-                  theme={{
-                    selectedDayBackgroundColor: '#E88F14',
-                    todayTextColor: '#E88F14',
-                    arrowColor: '#E88F14',
-                    textDisabledColor: '#CCC',
-                  }}
-                  style={styles.calendar}
-                />
-
-                <View style={styles.bookingSummary}>
-                  <Text style={styles.summaryTitle}>Booking Summary</Text>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Date:</Text>
-                    <Text style={styles.summaryValue}>
-                      {selectedDate ? new Date(selectedDate).toLocaleDateString() : 'Not selected'}
-                    </Text>
-                  </View>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Time:</Text>
-                    <Text style={styles.summaryValue}>
-                      {selectedVariation?.start_time} - {selectedVariation?.end_time}
-                    </Text>
-                  </View>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Price:</Text>
-                    <Text style={styles.summaryValue}>
-                      {selectedVariation ? formatPrice(selectedVariation.base_price) : 'N/A'}
-                    </Text>
-                  </View>
-                </View>
-
-                <TouchableOpacity 
-                  style={[
-                    styles.confirmButton,
-                    (!selectedDate || markedDates[selectedDate]?.disabled || bookingLoading) && styles.confirmButtonDisabled
-                  ]}
-                  onPress={confirmBooking}
-                  disabled={!selectedDate || markedDates[selectedDate]?.disabled || bookingLoading}
-                >
-                  {bookingLoading ? (
-                    <ActivityIndicator color="#FFF" />
-                  ) : (
-                    <Text style={styles.confirmButtonText}>Confirm Booking</Text>
-                  )}
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </View>
-      </Modal>
+        onClose={() => {
+          setCalendarModalVisible(false);
+          setMarkedDates({});
+        }}
+        selectedService={selectedService}
+        selectedVariation={selectedVariation}
+        loadingDates={loadingDates}
+        markedDates={markedDates}
+        selectedDate={selectedDate}
+        onDateSelect={handleDateSelect}
+        onConfirmBooking={confirmBooking}
+        bookingLoading={bookingLoading}
+        formatPrice={formatPrice}
+      />
     </SafeAreaView>
   );
 };
@@ -492,6 +387,92 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 6,
   },
+  modalContentFull: {
+  backgroundColor: '#FFF',
+  borderTopLeftRadius: 30,
+  borderTopRightRadius: 30,
+  maxHeight: '90%',
+  },
+  detailsScroll: {
+    paddingBottom: 20,
+  },
+  section: {
+    paddingHorizontal: 20,
+    marginTop: 16,
+  },
+  detailTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2D3436',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    marginTop: 8,
+    gap: 12,
+  },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  pillText: {
+    fontSize: 12,
+    color: '#2D3436',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  aboutText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  galleryImage: {
+    width: 120,
+    height: 80,
+    borderRadius: 12,
+    marginRight: 12,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  priceLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  priceValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2D3436',
+  },
+  priceNote: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 6,
+  },
+  policyCard: {
+    backgroundColor: '#F8F9FA',
+    padding: 12,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  policyCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  policyCardText: {
+    fontSize: 12,
+    color: '#666',
+  },
+
   listContent: {
     paddingTop: 12,
     paddingBottom: 24,

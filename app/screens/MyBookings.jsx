@@ -24,10 +24,10 @@ import {
   View
 } from 'react-native';
 import Toast from 'react-native-toast-message';
-import BookingDetails from '../../components/BookingDetails';
 import Header from '../../components/Header';
 import ToastMsg from "../../components/ToastMsg";
 import { cancelBooking, getBookingList } from '../../services/productService';
+import BookingDetails from "../modals/BookingDetails";
 
 const { width } = Dimensions.get("window");
 const H_PADDING = 16;
@@ -142,6 +142,8 @@ export default function Booking() {
     setCancelModalVisible(true);
   };
 
+  
+
   const handleCancelBooking = async () => {
     if (!selectedBooking) {
       ToastMsg("No booking selected for cancellation", "error");
@@ -182,7 +184,7 @@ export default function Booking() {
     try {
       const remoteUri = selectedBooking.qr_image.startsWith("http")
         ? selectedBooking.qr_image
-        : `https://temple.atomwalk.com/${selectedBooking.qr_image}`;
+        : `https://agamandira.com/${selectedBooking.qr_image}`;
       const fileUri = FileSystem.documentDirectory + "qr_code.png";
       const { uri } = await FileSystem.downloadAsync(remoteUri, fileUri);
       
@@ -353,6 +355,7 @@ export default function Booking() {
       <Header
         type="type3"
         showBackButton={true}
+        showSearchIcon={true}
         title="My Bookings"
         subtitle="Manage and track your spiritual journey"
         searchVisible={searchVisible}

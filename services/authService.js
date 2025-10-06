@@ -3,7 +3,7 @@
 export async function customerLogin(mobile_number, pin) {
     try {
         const response = await fetch(
-            'https://temple.atomwalk.com/customer/api/customer_pin_login/',
+            'https://agamandira.com/customer/api/customer_pin_login/',
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -24,7 +24,7 @@ export async function customerLogin(mobile_number, pin) {
 export async function customerForgotPin(mobile_number) {
     try {
         const response = await fetch(
-            'https://temple.atomwalk.com/customer/api/customer_forget_pin/',
+            'https://agamandira.com/customer/api/customer_forget_pin/',
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -45,7 +45,7 @@ export async function customerForgotPin(mobile_number) {
 export async function customerRegister(name, mobile_number, email_id, alternate_contact_number) {
     try {
         const response = await fetch(
-            'https://temple.atomwalk.com/customer/api/customer_registration/',
+            'https://agamandira.com/customer/api/customer_registration/',
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -71,7 +71,7 @@ export async function customerRegister(name, mobile_number, email_id, alternate_
 export async function customerSetPin(u_id, o_pin, n_pin) {
     try {
         const response = await fetch(
-            "https://temple.atomwalk.com/customer/api/customer_set_pin/",
+            "https://agamandira.com/customer/api/customer_set_pin/",
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

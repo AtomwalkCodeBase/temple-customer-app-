@@ -17,7 +17,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import BookingDetails from "../../components/BookingDetails";
+import BookingDetails from "../modals/BookingDetails";
 import Button from "../../components/Button";
 import Header from "../../components/Header";
 import StatusCards from "../../components/StatusCards";
@@ -81,6 +81,9 @@ const PromoCarousel = memo(function PromoCarouselComponent({ data = [], onBook =
       style={styles.promoCard}
       imageStyle={{ borderRadius: 20 }}
     >
+
+      <View style={styles.promoOverlay} />
+
       <View style={styles.promoTag}>
         <Text style={styles.promoTagText}>Upcoming Event</Text>
       </View>
@@ -166,7 +169,6 @@ export default function Home() {
   
   const placeholders = ["Search Temples", "Search Services"];
   const [index, setIndex] = useState(0);
-  const bellAnim = useRef(new Animated.Value(0)).current;
   
   useEffect(() => {
     let mounted = true;
@@ -304,21 +306,6 @@ export default function Home() {
   }, []);
   
   useEffect(() => {
-    Animated.sequence([
-      Animated.timing(bellAnim, { toValue: 1, duration: 120, useNativeDriver: true }),
-      Animated.timing(bellAnim, { toValue: -1, duration: 180, useNativeDriver: true }),
-      Animated.timing(bellAnim, { toValue: 0.6, duration: 140, useNativeDriver: true }),
-      Animated.timing(bellAnim, { toValue: -0.3, duration: 120, useNativeDriver: true }),
-      Animated.timing(bellAnim, { toValue: 0, duration: 120, useNativeDriver: true }),
-    ]).start();
-  }, []);
-  
-  const bellRotate = bellAnim.interpolate({
-    inputRange: [-1, 0, 1],
-    outputRange: ["-15deg", "0deg", "15deg"],
-  });
-  
-  useEffect(() => {
     (async () => {
       try {
         const res = await getTempleList();
@@ -415,9 +402,6 @@ export default function Home() {
           type="type1"
           userName="Vishnuvardhan"
           userId={refCode}
-          bellRotate={bellRotate}
-          onBellPress={() => console.log("Bell pressed")}
-          hasNotification={true}
         />
         <ScrollView showsVerticalScrollIndicator={false} nestedScrollEnabled>
           <View style={styles.searchWrap}>
@@ -788,5 +772,14 @@ const styles = StyleSheet.create({
   promoProgressLine: {
     backgroundColor: "#E88F14",
     alignSelf: "flex-start",
+  },
+  promoOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.3)", // thin black layer
+    borderRadius: 20,
+  },
+  promoContent: {
+    flex: 1,
+    justifyContent: "flex-start",
   },
 });
