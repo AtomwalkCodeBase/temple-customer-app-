@@ -12,11 +12,12 @@ import {
   View,
 } from "react-native";
 import ToastMsg from "../../components/ToastMsg";
-import { processBooking } from "../../services/productService";
+import { cancelBooking, getPaymentStatus, processBooking } from "../../services/productService";
 
 const PaymentOptionsModal = ({
   visible,
   onBack,
+  onPaymentComplete,
   selectedService,
   selectedVariation,
   selectedDate,
@@ -65,48 +66,103 @@ const PaymentOptionsModal = ({
   };
 
   const handleConfirm = async () => {
-    if (!selected) {
-      ToastMsg("Please select a payment method", "error");
-      return;
-    }
-    if (!selectedDate || !selectedVariation || !selectedService) {
-      ToastMsg("Missing booking details", "error");
-      return;
-    }
-    try {
-      setLoading(true);
-      const customer_refcode = await AsyncStorage.getItem("ref_code");
+  if (!selected) {
+    ToastMsg("Please select a payment method", "error");
+    return;
+  }
+  if (!selectedDate || !selectedVariation || !selectedService) {
+    ToastMsg("Missing booking details", "error");
+    return;
+  }
 
-      const bookingData = {
-        cust_ref_code: customer_refcode,
-        call_mode: "ADD_BOOKING",
-        service_variation_id: selectedVariation.id,
-        booking_date: formatDateForAPI(selectedDate),
-        end_date: formatDateForAPI(selectedDate),
-        start_time: selectedVariation.start_time,
-        end_time: selectedVariation.end_time,
-        notes: `Booking for ${selectedService.name}`,
-        quantity: 1,
-        duration: selectedService.duration_minutes || 60,
-        unit_price: parseFloat(selectedVariation.base_price),
-      };
+  try {
+    setLoading(true);
+    const customer_refcode = await AsyncStorage.getItem("ref_code");
 
-      const response = await processBooking(bookingData);
+    const bookingData = {
+      cust_ref_code: customer_refcode,
+      call_mode: "ADD_BOOKING",
+      service_variation_id: selectedVariation.id,
+      booking_date: formatDateForAPI(selectedDate),
+      end_date: formatDateForAPI(selectedDate),
+      start_time: selectedVariation.start_time,
+      end_time: selectedVariation.end_time,
+      notes: `Booking for ${selectedService.name}`,
+      quantity: 1,
+      duration: selectedService.duration_minutes || 60,
+      unit_price: parseFloat(selectedVariation.base_price),
+    };
 
-      if (response.status === 200) {
-        ToastMsg("Your booking has been confirmed!", "success");
-        onBack(true); // ✅ success
-      } else {
-        ToastMsg("Failed to process booking", "error");
-        onBack(false); // ❌ failure
+    // Step 1️⃣: Create booking
+    const response = await processBooking(bookingData);
+
+    // ✅ Handle both axios & fetch-style responses
+    const bookingRefCode =
+      response?.data?.booking_ref_code || response?.booking_ref_code || null;
+
+    if (bookingRefCode) {
+      ToastMsg("Booking created. Checking payment status...", "info");
+
+      // Step 2️⃣: Verify payment
+      const paymentResponse = await getPaymentStatus(bookingRefCode);
+
+      // Handle axios/fetch structures safely
+      const paymentData = paymentResponse?.data || paymentResponse;
+      const paymentStatus = paymentData?.payment?.status;
+      const transactionId = paymentData?.payment?.transaction_id;
+
+      if (!paymentStatus) {
+        ToastMsg("Payment status unavailable.", "error");
+        onBack(false);
+        return;
       }
-    } catch (err) {
-      ToastMsg("Something went wrong", "error");
-      onBack(false); // ❌ failure
-    } finally {
-      setLoading(false);
+
+      if (paymentStatus === "S") {
+        ToastMsg("Payment successful! Booking confirmed.", "success");
+        onPaymentComplete('success', bookingRefCode);
+      } else if (paymentStatus === "F" || paymentStatus === "P") {
+        const message =
+          paymentStatus === "F"
+            ? "Payment failed. Cancelling booking..."
+            : "Payment pending. Cancelling booking...";
+        ToastMsg(message, "error");
+
+        const cancelData = {
+          cust_ref_code: customer_refcode,
+          call_mode: "CANCEL",
+          booking_ref_code: bookingRefCode,
+          remarks:
+            paymentStatus === "F"
+              ? "Payment failed automatically"
+              : "Payment pending automatically",
+        };
+
+        try {
+          const cancelRes = await cancelBooking(cancelData);
+          ToastMsg("Booking cancelled due to payment issue.", "warning");
+        } catch (cancelErr) {
+          console.error("Error cancelling booking:", cancelErr);
+          ToastMsg("Failed to cancel booking automatically.", "error");
+        }
+        onPaymentComplete('failed', bookingRefCode);
+      } else {
+        ToastMsg("Unknown payment status. Please contact support.", "error");
+        onPaymentComplete('failed', bookingRefCode);
+      }
+    } else {
+      ToastMsg("Failed to process booking.", "error");
+      onBack(false);
     }
-  };
+  } catch (err) {
+    console.error("❌ Error in handleConfirm:", err);
+    ToastMsg("Something went wrong while processing booking.", "error");
+    onBack(false);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   // Pricing calculation
   const basePrice = parseFloat(selectedVariation?.base_price || 0);

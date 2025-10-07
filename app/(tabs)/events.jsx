@@ -44,8 +44,9 @@ const BookServicesScreen = () => {
   const [orderSummaryVisible, setOrderSummaryVisible] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [paymentStatusVisible, setPaymentStatusVisible] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState(''); // 'success', 'failed', 'processing'
+  const [paymentStatus, setPaymentStatus] = useState('');
   const [bookingRefCode, setBookingRefCode] = useState('');
+  const [paymentResult, setPaymentResult] = useState(null);
 
   const handleCloseStatusModal = () => {
     setPaymentStatusVisible(false);
@@ -289,113 +290,11 @@ const BookServicesScreen = () => {
   };
 
   const confirmDate = async () => {
-
     setCalendarModalVisible(false);
-    setPaymentModalVisible(true);
-
-    // if (!selectedDate || !selectedVariation) {
-    //   ToastMsg('Please select a date to continue', 'error');
-    //   return;
-    // }
-    // if (markedDates[selectedDate]?.disabled) {
-    //   ToastMsg('This date is no longer available for booking.', 'error');
-    //   return;
-    // }
-    // const customer_refcode = await AsyncStorage.getItem('ref_code');
-    // try {
-    //   setBookingLoading(true);
-    //   const bookingData = {
-    //     cust_ref_code: customer_refcode,
-    //     call_mode: "ADD_BOOKING",
-    //     service_variation_id: selectedVariation.id,
-    //     booking_date: formatDateForAPI(selectedDate),
-    //     end_date: formatDateForAPI(selectedDate),
-    //     start_time: selectedVariation.start_time,
-    //     end_time: selectedVariation.end_time,
-    //     notes: `Booking for ${selectedService.name}`,
-    //     quantity: 1,
-    //     duration: selectedService.duration_minutes || 60,
-    //     unit_price: parseFloat(selectedVariation.base_price)
-    //   };
-    //   const response = await processBooking(bookingData);
-    //   if (response.status === 200) {
-    //     // Store the booking reference code for payment status check
-    //     const refCode = response.data.booking_ref_code; // Adjust based on your API response
-    //     setBookingRefCode(refCode);
-        
-    //     setCalendarModalVisible(false);
-    //     setOrderSummaryVisible(true);
-    //     ToastMsg('Booking created! Proceeding to payment...', 'success');
-    //   } else {
-    //     ToastMsg('Failed to process booking', 'error');
-    //   }
-    // } catch (error) {
-    //   ToastMsg(`Booking failed: ${error.message}`, 'error');
-    // } finally {
-    //   setBookingLoading(false);
-    // }
+    setOrderSummaryVisible(true);
   };
 
-  const handlePaymentComplete = async (result) => {
-     if (!selectedDate || !selectedVariation) {
-      ToastMsg('Please select a date to continue', 'error');
-      return;
-    }
-    if (markedDates[selectedDate]?.disabled) {
-      ToastMsg('This date is no longer available for booking.', 'error');
-      return;
-    }
-    const customer_refcode = await AsyncStorage.getItem('ref_code');
-    try {
-      setBookingLoading(true);
-      const bookingData = {
-        cust_ref_code: customer_refcode,
-        call_mode: "ADD_BOOKING",
-        service_variation_id: selectedVariation.id,
-        booking_date: formatDateForAPI(selectedDate),
-        end_date: formatDateForAPI(selectedDate),
-        start_time: selectedVariation.start_time,
-        end_time: selectedVariation.end_time,
-        notes: `Booking for ${selectedService.name}`,
-        quantity: 1,
-        duration: selectedService.duration_minutes || 60,
-        unit_price: parseFloat(selectedVariation.base_price)
-      };
-      const response = await processBooking(bookingData);
-      if (response.status === 200) {
-        // Store the booking reference code for payment status check
-        const refCode = response.data.booking_ref_code; // Adjust based on your API response
-        setBookingRefCode(refCode);
-        
-        setCalendarModalVisible(false);
-        setOrderSummaryVisible(true);
-        ToastMsg('Booking created! Proceeding to payment...', 'success');
-      } else {
-        ToastMsg('Failed to process booking', 'error');
-      }
-    } catch (error) {
-      ToastMsg(`Booking failed: ${error.message}`, 'error');
-    } finally {
-      setBookingLoading(false);
-    }
-    setPaymentModalVisible(false);
-    setPaymentStatusVisible(true);
 
-    // if (result === null) {
-    //   // User went back, show order summary again
-    //   setOrderSummaryVisible(true);
-    //   return;
-    // }
-
-    // if (result && bookingRefCode) {
-    //   // Payment was attempted, check the actual status from API
-    //   await checkPaymentStatus(bookingRefCode);
-    // } else {
-    //   // No result or no booking reference
-    //   setPaymentStatus('failed');
-    //   setPaymentStatusVisible(true);
-    // }
-  };
 
   const VariationItem = ({ variation }) => (
     <TouchableOpacity 
@@ -553,16 +452,28 @@ const BookServicesScreen = () => {
 
       <PaymentOptionsModal
         visible={paymentModalVisible}
-        onBack={handlePaymentComplete}
+        onBack={() => {
+          setOrderSummaryVisible(true);
+          setPaymentModalVisible(false);
+        }}
+        onPaymentComplete={(status, refCode) => {
+          setPaymentModalVisible(false);
+          setPaymentStatus(status);
+          setBookingRefCode(refCode);
+          setPaymentStatusVisible(true);
+          
+          // Also close order summary if needed
+          setOrderSummaryVisible(false);
+        }}
         selectedService={selectedService}
         selectedVariation={selectedVariation}
         selectedDate={selectedDate}
-        bookingRefCode={bookingRefCode} // Pass the ref code to payment modal if needed
+        bookingRefCode={bookingRefCode}
       />
 
       <PaymentStatusModal
         visible={paymentStatusVisible}
-        status="success"//{paymentStatus}  Use the actual status from API
+        status={paymentStatus}
         onClose={handleCloseStatusModal}
         message={paymentStatus === 'success' 
           ? 'Your booking has been confirmed!' 

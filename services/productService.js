@@ -11,7 +11,6 @@ export function getTempleServiceList() {
 }
 
 export function processBooking(bookingData) {
-    console.log(bookingData, "bookingData")
     const data = {}
     data["booking_data"] = bookingData
     return authAxiosPost(process_booking_data, data);
@@ -66,18 +65,14 @@ export function getPanchangData(region, odiaType = null, year = null, month = nu
         .catch(error => ({ status: 500, message: error.message }));
 }
 
-export async function getPaymentStatus(refCode) {
-    console.log("Processing payment for:", refCode);
-
-    const formData = new FormData();
-    formData.append("ref_code", refCode);
-
+export const getPaymentStatus = async (refCode) => {
     try {
-        const response = await authAxiosPost(process_booking_payment, formData);
-        console.log("Payment response:", response);
+        const data = { ref_code: refCode };
+        const response = await authAxiosPost(process_booking_payment, data);
         return response;
-    } catch (error) {
-        console.error("Error in processPayment:", error);
-        throw error;
+    } catch (err) {
+        console.error("Error in processPayment:", err);
+        throw err;
     }
-}
+};
+
