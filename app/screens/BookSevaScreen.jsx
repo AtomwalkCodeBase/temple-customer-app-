@@ -18,8 +18,11 @@ import {
 import Cards from '../../components/Cards';
 import Header from '../../components/Header';
 import ToastMsg from '../../components/ToastMsg';
-import { getBookingList, getTempleServiceList, processBooking } from '../../services/productService';
+import { getBookingList, getPaymentStatus, getTempleServiceList, processBooking } from '../../services/productService';
 import CalendarModal from '../modals/CalendarModal';
+import OrderSummaryModal from '../modals/OrderSummaryModal';
+import PaymentOptionsModal from '../modals/PaymentOptionsModal';
+import PaymentStatusModal from '../modals/PaymentStatusModal';
 import ServiceDetails from '../modals/ServiceDetails';
 
 const { width } = Dimensions.get('window');
@@ -40,13 +43,19 @@ const BookSevaScreen = () => {
   const [loadingDates, setLoadingDates] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [orderSummaryVisible, setOrderSummaryVisible] = useState(false);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [paymentStatusVisible, setPaymentStatusVisible] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState('');
+  const [bookingRefCode, setBookingRefCode] = useState('');
+  const [preloadedDates, setPreloadedDates] = useState({});
+  const [preloadingDates, setPreloadingDates] = useState(false);
 
-  const toggleSearch = () => {
-    setSearchVisible(!searchVisible);
-    if (searchVisible) {
-      setSearchQuery('');
-    }
-  };  
+  const handleCloseStatusModal = () => {
+    setPaymentStatusVisible(false);
+    setPaymentStatus('');
+    setBookingRefCode('');
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -75,61 +84,183 @@ const BookSevaScreen = () => {
     }
   };
 
-  const fetchBookingsForService = async (variation, serviceId) => {
+  // Prefetch dates for all variations when service is selected
+  const prefetchDatesForService = async (service) => {
+    if (!service || !service.service_variation_list) return;
+    
     try {
-      setLoadingDates(true);
-
+      setPreloadingDates(true);
       const response = await getBookingList();
       if (response.status !== 200 || !response.data) return;
-
+      
       const allBookings = response.data.filter(
-        (b) => (b.service_data?.service_id || b.service_id) === serviceId
+        (b) => (b.service_data?.service_id || b.service_id) === service.service_id
       );
 
+      const datesMap = {};
+      
+      // Prefetch for each variation
+      for (const variation of service.service_variation_list) {
+        const variationDates = await fetchBookingsForVariation(
+          variation, 
+          service.service_id, 
+          allBookings
+        );
+        datesMap[variation.id] = variationDates;
+      }
+      
+      setPreloadedDates(datesMap);
+    } catch (error) {
+      console.error('Error preloading dates:', error);
+    } finally {
+      setPreloadingDates(false);
+    }
+  };
+
+  const fetchBookingsForVariation = async (variation, serviceId, allBookings) => {
+    try {
       const currentStart = parseTime(variation.start_time);
       const currentEnd = parseTime(variation.end_time);
       const currentPriceType = variation.price_type;
       const dates = {};
 
-      allBookings.forEach((booking) => {
-        const bookingDate = formatAPIDateToISO(booking.booking_date);
-        if (booking.status !== "B") {
-          return;
-        }
-        const bookingStart = parseTime(booking.start_time);
-        const bookingEnd = parseTime(booking.end_time);
-        const bookingPriceType = booking.service_variation_data?.price_type;
-        if (bookingPriceType === "FULL_DAY") {
-          dates[bookingDate] = {
-            disabled: true,
-            disableTouchEvent: true,
-          };
-          return;
-        }
-        if (currentPriceType === "FULL_DAY") {
-          dates[bookingDate] = {
-            disabled: true,
-            disableTouchEvent: true,
-          };
-          return;
-        }
-        if (
-          bookingStart !== null &&
-          bookingEnd !== null &&
-          currentStart !== null &&
-          currentEnd !== null
-        ) {
-          const overlap = bookingStart < currentEnd && currentStart < bookingEnd;
-          if (overlap) {
-            dates[bookingDate] = {
+      // Check if this is an EVENT service
+      const isEventService = selectedService?.service_type?.toUpperCase() === 'EVENT';
+
+      if (isEventService) {
+        // EVENT service logic - block dates based on capacity
+        const dateWiseBookings = {};
+        
+        // Group bookings by date and calculate total participants
+        allBookings.forEach((booking) => {
+          if (booking.status !== "B") return;
+          
+          const bookingDate = formatAPIDateToISO(booking.booking_date);
+          if (!bookingDate) return;
+          
+          if (!dateWiseBookings[bookingDate]) {
+            dateWiseBookings[bookingDate] = {
+              totalParticipants: 0,
+              count: 0
+            };
+          }
+          
+          // Add participants for this booking
+          const participants = parseInt(booking.no_of_participants) || 1;
+          dateWiseBookings[bookingDate].totalParticipants += participants;
+          dateWiseBookings[bookingDate].count += 1;
+        });
+
+        // Mark dates as disabled if capacity is exceeded
+        Object.keys(dateWiseBookings).forEach(date => {
+          const bookingData = dateWiseBookings[date];
+          const maxCapacity = parseInt(variation.max_participant) || 0;
+          const maxSlots = parseInt(variation.max_no_per_day) || 0;
+          
+          // Check if capacity OR slot limit is exceeded
+          const capacityExceeded = maxCapacity > 0 && bookingData.totalParticipants >= maxCapacity;
+          const slotsExceeded = maxSlots > 0 && bookingData.count >= maxSlots;
+          
+          if (capacityExceeded || slotsExceeded) {
+            dates[date] = {
               disabled: true,
               disableTouchEvent: true,
             };
           }
-        }
-      });
+        });
+
+      } else {
+        // Existing logic for HALL and PUJA services (time-based blocking)
+        allBookings.forEach((booking) => {
+          const bookingDate = formatAPIDateToISO(booking.booking_date);
+          if (booking.status !== "B") {
+            return;
+          }
+          
+          const bookingStart = parseTime(booking.start_time);
+          const bookingEnd = parseTime(booking.end_time);
+          const bookingPriceType = booking.service_variation_data?.price_type;
+          
+          if (bookingPriceType === "FULL_DAY") {
+            dates[bookingDate] = {
+              disabled: true,
+              disableTouchEvent: true,
+            };
+            return;
+          }
+          
+          if (currentPriceType === "FULL_DAY") {
+            dates[bookingDate] = {
+              disabled: true,
+              disableTouchEvent: true,
+            };
+            return;
+          }
+          
+          if (
+            bookingStart !== null &&
+            bookingEnd !== null &&
+            currentStart !== null &&
+            currentEnd !== null
+          ) {
+            const overlap = bookingStart < currentEnd && currentStart < bookingEnd;
+            if (overlap) {
+              dates[bookingDate] = {
+                disabled: true,
+                disableTouchEvent: true,
+              };
+            }
+          }
+        });
+      }
+
+      return dates;
+    } catch (error) {
+      console.error('Error fetching bookings for variation:', error);
+      return {};
+    }
+  };
+
+  const handleBookNow = async (service) => {
+    setSelectedService(service);
+    setModalVisible(true);
+    
+    // Prefetch dates when modal opens
+    await prefetchDatesForService(service);
+  };
+
+  const handleVariationSelect = (variation) => {
+    setSelectedVariation(variation);
+    setModalVisible(false);
+
+    const variationKey = variation.id;
+    
+    // Use preloaded dates if available
+    if (preloadedDates[variationKey]) {
+      setMarkedDates(preloadedDates[variationKey]);
+    } else {
+      // Fallback: fetch if not preloaded
+      fetchBookingsForService(variation, selectedService.service_id);
+    }
+    
+    setCalendarModalVisible(true);
+  };
+
+  // Keep the original function for fallback
+  const fetchBookingsForService = async (variation, serviceId) => {
+    try {
+      setLoadingDates(true);
+      const response = await getBookingList();
+      if (response.status !== 200 || !response.data) return;
+      
+      const allBookings = response.data.filter(
+        (b) => (b.service_data?.service_id || b.service_id) === serviceId
+      );
+
+      const dates = await fetchBookingsForVariation(variation, serviceId, allBookings);
       setMarkedDates(dates);
     } catch (error) {
+      console.error('Error fetching bookings:', error);
       ToastMsg("Failed to load availability. Please try again.", "error");
     } finally {
       setLoadingDates(false);
@@ -148,24 +279,17 @@ const BookSevaScreen = () => {
     return hh * 60 + (mm || 0);
   };
 
-  const handleBookNow = (service) => {
-    setSelectedService(service);
-    setModalVisible(true);
-  };
-
-  const handleVariationSelect = async (variation) => {
-    setSelectedVariation(variation);
-    setModalVisible(false);
-    await fetchBookingsForService(variation, selectedService.service_id);
-    setCalendarModalVisible(true);
-  };
-
   const handleDateSelect = (day) => {
     if (markedDates[day.dateString]?.disabled) {
-      ToastMsg('This date is not available for booking.', 'error');
+      const isEventService = selectedService?.service_type?.toUpperCase() === 'EVENT';
+      
+      if (isEventService) {
+        ToastMsg('This date is fully booked. No available capacity.', 'error');
+      } else {
+        ToastMsg('This date is not available for booking.', 'error');
+      }
       return;
     }
-    
     setSelectedDate(day.dateString);
   };
 
@@ -183,59 +307,82 @@ const BookSevaScreen = () => {
     return `${day}-${month}-${year}`;
   };
 
-  const confirmBooking = async () => {
-    if (!selectedDate || !selectedVariation) {
-      ToastMsg('Please select a date to continue', 'error');
-      return;
-    }
-    
-    if (markedDates[selectedDate]?.disabled) {
-      ToastMsg('This date is no longer available for booking.', 'error');
-      return;
-    }
-    
-    const customer_refcode = await AsyncStorage.getItem('ref_code');
+  const confirmDate = async () => {
+    setCalendarModalVisible(false);
+    setOrderSummaryVisible(true);
+  };
 
+  const handleProceedToPayment = () => {
+    setOrderSummaryVisible(false);
+    setPaymentModalVisible(true);
+  };
+
+  const checkPaymentStatus = async (refCode) => {
     try {
-      setBookingLoading(true);
+      const response = await getPaymentStatus(refCode);
       
-      const bookingData = {
-        cust_ref_code: customer_refcode,
-        call_mode: "ADD_BOOKING",
-        service_variation_id: selectedVariation.id,
-        booking_date: formatDateForAPI(selectedDate),
-        end_date: formatDateForAPI(selectedDate),
-        start_time: selectedVariation.start_time,
-        end_time: selectedVariation.end_time,
-        notes: `Booking for ${selectedService.name}`,
-        quantity: 1,
-        duration: selectedService.duration_minutes || 60,
-        unit_price: parseFloat(selectedVariation.base_price)
-      };
-
-      const response = await processBooking(bookingData);
-
-      if (response.status === 200) {
-        setCalendarModalVisible(false);
-        setSelectedService(null);
-        setSelectedVariation(null);
-        setSelectedDate(null);
-        setMarkedDates({});
-
-        ToastMsg('Your booking has been confirmed!', 'success');
+      if (response.status === 200 && response.data) {
+        const paymentStatus = response.data.payment?.status;
         
-        setTimeout(() => {
-          router.replace('/screens/MyBookings');
-        }, 2000);
+        switch (paymentStatus) {
+          case 'S': // Success
+            setPaymentStatus('success');
+            ToastMsg('Payment successful! Booking confirmed.', 'success');
+            break;
+          case 'F': // Failed
+            setPaymentStatus('failed');
+            // Cancel the booking since payment failed
+            await cancelBooking(refCode);
+            ToastMsg('Payment failed. Booking cancelled.', 'error');
+            break;
+          case 'P': // Processing
+            setPaymentStatus('processing');
+            // Cancel the booking since payment is still processing
+            await cancelBooking(refCode);
+            ToastMsg('Payment is still processing. Please try again.', 'warning');
+            break;
+          default:
+            setPaymentStatus('failed');
+            await cancelBooking(refCode);
+            ToastMsg('Payment status unknown. Please contact support.', 'error');
+            break;
+        }
       } else {
-        ToastMsg('Failed to process booking', 'error');
+        setPaymentStatus('failed');
+        await cancelBooking(refCode);
+        ToastMsg('Failed to verify payment status.', 'error');
       }
     } catch (error) {
-      ToastMsg(`Booking failed: ${error.message}`, 'error');
+      console.error('Error checking payment status:', error);
+      setPaymentStatus('failed');
+      await cancelBooking(refCode);
+      ToastMsg('Error verifying payment. Please contact support.', 'error');
     } finally {
-      setBookingLoading(false);
+      setPaymentStatusVisible(true);
     }
   };
+
+  const cancelBooking = async (refCode) => {
+    try {
+      const customer_refcode = await AsyncStorage.getItem('ref_code');
+      const cancelData = {
+        cust_ref_code: customer_refcode,
+        call_mode: "CANCEL_BOOKING",
+        booking_ref_code: refCode,
+        cancel_reason: "Payment failed or processing"
+      };
+      await processBooking(cancelData);
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+    }
+  };
+
+  const toggleSearch = () => {
+    setSearchVisible(!searchVisible);
+    if (searchVisible) {
+      setSearchQuery('');
+    }
+  };  
 
   const VariationItem = ({ variation }) => (
     <TouchableOpacity 
@@ -338,11 +485,15 @@ const BookSevaScreen = () => {
         modalVisible={modalVisible}
         setModalVisible={setModalVisible}
         handleVariationSelect={handleVariationSelect}
+        preloadingDates={preloadingDates}
       />
-
 
       <CalendarModal
         visible={calendarModalVisible}
+        onBack={() => {
+          setCalendarModalVisible(false);
+          setModalVisible(true);
+        }}
         onClose={() => {
           setCalendarModalVisible(false);
           setMarkedDates({});
@@ -353,9 +504,58 @@ const BookSevaScreen = () => {
         markedDates={markedDates}
         selectedDate={selectedDate}
         onDateSelect={handleDateSelect}
-        onConfirmBooking={confirmBooking}
+        onConfirmDate={confirmDate}
         bookingLoading={bookingLoading}
         formatPrice={formatPrice}
+      />
+
+      <OrderSummaryModal
+        visible={orderSummaryVisible}
+        onBack={() => {
+          setOrderSummaryVisible(false);
+          setCalendarModalVisible(true);
+        }}
+        onClose={() => {
+          setOrderSummaryVisible(false);
+        }}
+        onProceedToPayment={handleProceedToPayment}
+        selectedService={selectedService}
+        selectedVariation={selectedVariation}
+        selectedDate={selectedDate}
+        formatPrice={formatPrice}
+        bookingLoading={bookingLoading}
+      />
+
+      <PaymentOptionsModal
+        visible={paymentModalVisible}
+        onBack={() => {
+          setOrderSummaryVisible(true);
+          setPaymentModalVisible(false);
+        }}
+        onPaymentComplete={(status, refCode) => {
+          setPaymentModalVisible(false);
+          setPaymentStatus(status);
+          setBookingRefCode(refCode);
+          setPaymentStatusVisible(true);
+          
+          // Also close order summary if needed
+          setOrderSummaryVisible(false);
+        }}
+        selectedService={selectedService}
+        selectedVariation={selectedVariation}
+        selectedDate={selectedDate}
+        bookingRefCode={bookingRefCode}
+      />
+
+      <PaymentStatusModal
+        visible={paymentStatusVisible}
+        status={paymentStatus}
+        onClose={handleCloseStatusModal}
+        message={paymentStatus === 'success' 
+          ? 'Your booking has been confirmed!' 
+          : paymentStatus === 'processing'
+          ? 'Payment is being processed. Please check your payment status later.'
+          : 'Payment failed. Please try again.'}
       />
     </SafeAreaView>
   );

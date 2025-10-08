@@ -133,8 +133,7 @@ const BookServicesScreen = () => {
         (b) => (b.service_data?.service_id || b.service_id) === service.service_id
       );
 
-      const datesMap = {};
-      
+      const datesMap = {};      
       // Prefetch for each variation
       for (const variation of service.service_variation_list) {
         const variationDates = await fetchBookingsForVariation(
@@ -142,9 +141,9 @@ const BookServicesScreen = () => {
           service.service_id, 
           allBookings
         );
-        datesMap[variation.variation_id] = variationDates;
+        datesMap[variation.id] = variationDates;
       }
-      
+            
       setPreloadedDates(datesMap);
     } catch (error) {
       console.error('Error preloading dates:', error);
@@ -268,10 +267,12 @@ const BookServicesScreen = () => {
   const handleVariationSelect = (variation) => {
     setSelectedVariation(variation);
     setModalVisible(false);
+
+    const variationKey = variation.id;
     
     // Use preloaded dates if available
-    if (preloadedDates[variation.variation_id]) {
-      setMarkedDates(preloadedDates[variation.variation_id]);
+    if (preloadedDates[variationKey]) {
+      setMarkedDates(preloadedDates[variationKey]);
     } else {
       // Fallback: fetch if not preloaded
       fetchBookingsForService(variation, selectedService.service_id);

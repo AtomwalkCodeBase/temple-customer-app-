@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   Image,
   Modal,
@@ -131,12 +132,12 @@ const handleQuantityChange = (change) => {
         // setQuantity(1); // Reset quantity when modal closes
       }}
     >
-      {/* {preloadingDates && (
+      {preloadingDates && (
         <View style={styles.preloadingIndicator}>
           <ActivityIndicator size="small" color="#E88F14" />
           <Text style={styles.preloadingText}>Loading availability...</Text>
         </View>
-      )} */}
+      )}
       <View style={styles.modalOverlay}>
         <View style={styles.modalContentFull} onPress={() => {}}>
           <View style={styles.modalHeader}>

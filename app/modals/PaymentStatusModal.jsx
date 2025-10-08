@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { ActivityIndicator, Modal, StyleSheet, Text, View } from 'react-native';
 
-const PaymentStatusModal = ({ visible, status = 'success', onClose }) => {
+const PaymentStatusModal = ({ visible, status = 'success', onClose, onDateSelect }) => {
   useEffect(() => {
     if (visible) {
       const timer = setTimeout(() => {

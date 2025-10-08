@@ -80,7 +80,6 @@ export async function customerSetPin(u_id, o_pin, n_pin) {
         );
 
         const text = await response.text();
-        console.log("API Response:", text);
 
         try {
             return JSON.parse(text);
