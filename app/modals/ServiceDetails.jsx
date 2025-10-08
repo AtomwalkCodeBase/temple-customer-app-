@@ -18,7 +18,8 @@ const ServiceDetails = ({
   selectedService, 
   modalVisible, 
   setModalVisible, 
-  handleVariationSelect 
+  handleVariationSelect,
+  preloadingDates 
 }) => {
   const [selectedVariation, setSelectedVariation] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -126,10 +127,16 @@ const handleQuantityChange = (change) => {
       transparent={true}
       onRequestClose={() => {
         setModalVisible(false);
-        setSelectedVariation(null); // Reset selection when modal closes
-        setQuantity(1); // Reset quantity when modal closes
+        // setSelectedVariation(null); // Reset selection when modal closes
+        // setQuantity(1); // Reset quantity when modal closes
       }}
     >
+      {/* {preloadingDates && (
+        <View style={styles.preloadingIndicator}>
+          <ActivityIndicator size="small" color="#E88F14" />
+          <Text style={styles.preloadingText}>Loading availability...</Text>
+        </View>
+      )} */}
       <View style={styles.modalOverlay}>
         <View style={styles.modalContentFull} onPress={() => {}}>
           <View style={styles.modalHeader}>
@@ -626,6 +633,21 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
+  },
+  preloadingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 10,
+    backgroundColor: '#FFF7ED',
+    marginHorizontal: 20,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  preloadingText: {
+    marginLeft: 8,
+    fontSize: 12,
+    color: '#E88F14',
   },
 });
 

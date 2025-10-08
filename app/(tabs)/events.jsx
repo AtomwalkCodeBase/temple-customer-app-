@@ -46,7 +46,8 @@ const BookServicesScreen = () => {
   const [paymentStatusVisible, setPaymentStatusVisible] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState('');
   const [bookingRefCode, setBookingRefCode] = useState('');
-  const [paymentResult, setPaymentResult] = useState(null);
+  const [preloadedDates, setPreloadedDates] = useState({});
+  const [preloadingDates, setPreloadingDates] = useState(false);
 
   const handleCloseStatusModal = () => {
     setPaymentStatusVisible(false);
@@ -119,119 +120,186 @@ const BookServicesScreen = () => {
     }
   };
 
-  const fetchBookingsForService = async (variation, serviceId) => {
-  try {
-    setLoadingDates(true);
-    const response = await getBookingList();
-    if (response.status !== 200 || !response.data) return;
+  // Prefetch dates for all variations when service is selected
+  const prefetchDatesForService = async (service) => {
+    if (!service || !service.service_variation_list) return;
     
-    const allBookings = response.data.filter(
-      (b) => (b.service_data?.service_id || b.service_id) === serviceId
-    );
-
-    const currentStart = parseTime(variation.start_time);
-    const currentEnd = parseTime(variation.end_time);
-    const currentPriceType = variation.price_type;
-    const dates = {};
-
-    // Check if this is an EVENT service
-    const isEventService = selectedService?.service_type?.toUpperCase() === 'EVENT';
-
-    if (isEventService) {
-      // EVENT service logic - block dates based on capacity
-      const dateWiseBookings = {};
+    try {
+      setPreloadingDates(true);
+      const response = await getBookingList();
+      if (response.status !== 200 || !response.data) return;
       
-      // Group bookings by date and calculate total participants
-      allBookings.forEach((booking) => {
-        if (booking.status !== "B") return;
-        
-        const bookingDate = formatAPIDateToISO(booking.booking_date);
-        if (!bookingDate) return;
-        
-        if (!dateWiseBookings[bookingDate]) {
-          dateWiseBookings[bookingDate] = {
-            totalParticipants: 0,
-            count: 0
-          };
-        }
-        
-        // Add participants for this booking
-        const participants = parseInt(booking.no_of_participants) || 1;
-        dateWiseBookings[bookingDate].totalParticipants += participants;
-        dateWiseBookings[bookingDate].count += 1;
-      });
+      const allBookings = response.data.filter(
+        (b) => (b.service_data?.service_id || b.service_id) === service.service_id
+      );
 
-      // Mark dates as disabled if capacity is exceeded
-      Object.keys(dateWiseBookings).forEach(date => {
-        const bookingData = dateWiseBookings[date];
-        const maxCapacity = parseInt(variation.max_participant) || 0;
-        const maxSlots = parseInt(variation.max_no_per_day) || 0;
-        
-        // Check if capacity OR slot limit is exceeded
-        const capacityExceeded = maxCapacity > 0 && bookingData.totalParticipants >= maxCapacity;
-        const slotsExceeded = maxSlots > 0 && bookingData.count >= maxSlots;
-        
-        if (capacityExceeded || slotsExceeded) {
-          dates[date] = {
-            disabled: true,
-            disableTouchEvent: true,
-          };
-        }
-      });
+      const datesMap = {};
+      
+      // Prefetch for each variation
+      for (const variation of service.service_variation_list) {
+        const variationDates = await fetchBookingsForVariation(
+          variation, 
+          service.service_id, 
+          allBookings
+        );
+        datesMap[variation.variation_id] = variationDates;
+      }
+      
+      setPreloadedDates(datesMap);
+    } catch (error) {
+      console.error('Error preloading dates:', error);
+    } finally {
+      setPreloadingDates(false);
+    }
+  };
 
-    } else {
-      // Existing logic for HALL and PUJA services (time-based blocking)
-      allBookings.forEach((booking) => {
-        const bookingDate = formatAPIDateToISO(booking.booking_date);
-        if (booking.status !== "B") {
-          return;
-        }
+  const fetchBookingsForVariation = async (variation, serviceId, allBookings) => {
+    try {
+      const currentStart = parseTime(variation.start_time);
+      const currentEnd = parseTime(variation.end_time);
+      const currentPriceType = variation.price_type;
+      const dates = {};
+
+      // Check if this is an EVENT service
+      const isEventService = selectedService?.service_type?.toUpperCase() === 'EVENT';
+
+      if (isEventService) {
+        // EVENT service logic - block dates based on capacity
+        const dateWiseBookings = {};
         
-        const bookingStart = parseTime(booking.start_time);
-        const bookingEnd = parseTime(booking.end_time);
-        const bookingPriceType = booking.service_variation_data?.price_type;
-        
-        if (bookingPriceType === "FULL_DAY") {
-          dates[bookingDate] = {
-            disabled: true,
-            disableTouchEvent: true,
-          };
-          return;
-        }
-        
-        if (currentPriceType === "FULL_DAY") {
-          dates[bookingDate] = {
-            disabled: true,
-            disableTouchEvent: true,
-          };
-          return;
-        }
-        
-        if (
-          bookingStart !== null &&
-          bookingEnd !== null &&
-          currentStart !== null &&
-          currentEnd !== null
-        ) {
-          const overlap = bookingStart < currentEnd && currentStart < bookingEnd;
-          if (overlap) {
-            dates[bookingDate] = {
+        // Group bookings by date and calculate total participants
+        allBookings.forEach((booking) => {
+          if (booking.status !== "B") return;
+          
+          const bookingDate = formatAPIDateToISO(booking.booking_date);
+          if (!bookingDate) return;
+          
+          if (!dateWiseBookings[bookingDate]) {
+            dateWiseBookings[bookingDate] = {
+              totalParticipants: 0,
+              count: 0
+            };
+          }
+          
+          // Add participants for this booking
+          const participants = parseInt(booking.no_of_participants) || 1;
+          dateWiseBookings[bookingDate].totalParticipants += participants;
+          dateWiseBookings[bookingDate].count += 1;
+        });
+
+        // Mark dates as disabled if capacity is exceeded
+        Object.keys(dateWiseBookings).forEach(date => {
+          const bookingData = dateWiseBookings[date];
+          const maxCapacity = parseInt(variation.max_participant) || 0;
+          const maxSlots = parseInt(variation.max_no_per_day) || 0;
+          
+          // Check if capacity OR slot limit is exceeded
+          const capacityExceeded = maxCapacity > 0 && bookingData.totalParticipants >= maxCapacity;
+          const slotsExceeded = maxSlots > 0 && bookingData.count >= maxSlots;
+          
+          if (capacityExceeded || slotsExceeded) {
+            dates[date] = {
               disabled: true,
               disableTouchEvent: true,
             };
           }
-        }
-      });
-    }
+        });
 
-    setMarkedDates(dates);
-  } catch (error) {
-    console.error('Error fetching bookings:', error);
-    ToastMsg("Failed to load availability. Please try again.", "error");
-  } finally {
-    setLoadingDates(false);
-  }
-};
+      } else {
+        // Existing logic for HALL and PUJA services (time-based blocking)
+        allBookings.forEach((booking) => {
+          const bookingDate = formatAPIDateToISO(booking.booking_date);
+          if (booking.status !== "B") {
+            return;
+          }
+          
+          const bookingStart = parseTime(booking.start_time);
+          const bookingEnd = parseTime(booking.end_time);
+          const bookingPriceType = booking.service_variation_data?.price_type;
+          
+          if (bookingPriceType === "FULL_DAY") {
+            dates[bookingDate] = {
+              disabled: true,
+              disableTouchEvent: true,
+            };
+            return;
+          }
+          
+          if (currentPriceType === "FULL_DAY") {
+            dates[bookingDate] = {
+              disabled: true,
+              disableTouchEvent: true,
+            };
+            return;
+          }
+          
+          if (
+            bookingStart !== null &&
+            bookingEnd !== null &&
+            currentStart !== null &&
+            currentEnd !== null
+          ) {
+            const overlap = bookingStart < currentEnd && currentStart < bookingEnd;
+            if (overlap) {
+              dates[bookingDate] = {
+                disabled: true,
+                disableTouchEvent: true,
+              };
+            }
+          }
+        });
+      }
+
+      return dates;
+    } catch (error) {
+      console.error('Error fetching bookings for variation:', error);
+      return {};
+    }
+  };
+
+  const handleBookNow = async (service) => {
+    setSelectedService(service);
+    setModalVisible(true);
+    
+    // Prefetch dates when modal opens
+    await prefetchDatesForService(service);
+  };
+
+  const handleVariationSelect = (variation) => {
+    setSelectedVariation(variation);
+    setModalVisible(false);
+    
+    // Use preloaded dates if available
+    if (preloadedDates[variation.variation_id]) {
+      setMarkedDates(preloadedDates[variation.variation_id]);
+    } else {
+      // Fallback: fetch if not preloaded
+      fetchBookingsForService(variation, selectedService.service_id);
+    }
+    
+    setCalendarModalVisible(true);
+  };
+
+  // Keep the original function for fallback
+  const fetchBookingsForService = async (variation, serviceId) => {
+    try {
+      setLoadingDates(true);
+      const response = await getBookingList();
+      if (response.status !== 200 || !response.data) return;
+      
+      const allBookings = response.data.filter(
+        (b) => (b.service_data?.service_id || b.service_id) === serviceId
+      );
+
+      const dates = await fetchBookingsForVariation(variation, serviceId, allBookings);
+      setMarkedDates(dates);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+      ToastMsg("Failed to load availability. Please try again.", "error");
+    } finally {
+      setLoadingDates(false);
+    }
+  };
 
   const navigation = useNavigation();
 
@@ -312,18 +380,6 @@ const BookServicesScreen = () => {
     return hh * 60 + (mm || 0);
   };
 
-  const handleBookNow = (service) => {
-    setSelectedService(service);
-    setModalVisible(true);
-  };
-
-  const handleVariationSelect = async (variation) => {
-    setSelectedVariation(variation);
-    setModalVisible(false);
-    await fetchBookingsForService(variation, selectedService.service_id);
-    setCalendarModalVisible(true);
-  };
-
   const handleDateSelect = (day) => {
     if (markedDates[day.dateString]?.disabled) {
       const isEventService = selectedService?.service_type?.toUpperCase() === 'EVENT';
@@ -356,8 +412,6 @@ const BookServicesScreen = () => {
     setCalendarModalVisible(false);
     setOrderSummaryVisible(true);
   };
-
-
 
   const VariationItem = ({ variation }) => (
     <TouchableOpacity 
@@ -473,6 +527,7 @@ const BookServicesScreen = () => {
         modalVisible={modalVisible}
         setModalVisible={setModalVisible}
         handleVariationSelect={handleVariationSelect}
+        preloadingDates={preloadingDates}
       />
 
       <CalendarModal
