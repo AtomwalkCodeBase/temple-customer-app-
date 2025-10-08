@@ -88,7 +88,7 @@ const PaymentOptionsModal = ({
       start_time: selectedVariation.start_time,
       end_time: selectedVariation.end_time,
       notes: `Booking for ${selectedService.name}`,
-      quantity: 1,
+      quantity: quantity,
       duration: selectedService.duration_minutes || 60,
       unit_price: parseFloat(selectedVariation.base_price),
     };
@@ -168,7 +168,9 @@ const PaymentOptionsModal = ({
   const basePrice = parseFloat(selectedVariation?.base_price || 0);
   const discount = 0;
   const platformFee = 0;
-  const total = basePrice - discount + platformFee;
+  const quantity = selectedVariation?.quantity || 1;
+  const total = basePrice * quantity - discount + platformFee;
+
 
   const formatDate = (dateString) => {
     if (!dateString) return "Not selected";
@@ -221,9 +223,10 @@ const PaymentOptionsModal = ({
           {showPricing && (
             <View style={styles.pricingDetails}>
               <View style={styles.pricingRow}>
-                <Text style={styles.pricingLabel}>Service Price</Text>
-                <Text style={styles.pricingValue}>₹{basePrice.toFixed(2)}</Text>
+                <Text style={styles.pricingLabel}>Price</Text>
+                <Text style={styles.pricingValue}>₹{(basePrice*quantity).toFixed(2)}</Text>
               </View>
+              
               <View style={styles.pricingRow}>
                 <Text style={styles.pricingLabel}>Discount</Text>
                 <Text style={[styles.pricingValue, styles.discountValue]}>

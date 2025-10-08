@@ -22,7 +22,9 @@ const OrderSummaryModal = ({
   const basePrice = parseFloat(selectedVariation?.base_price || 0);
   const discount = 0; // you can update logic later
   const platformFee = 0; // static fee example
-  const total = basePrice - discount + platformFee;
+  const quantity = selectedVariation?.quantity || 1; // default to 1 if not set
+  const total = basePrice * quantity - discount + platformFee;
+
 
   const formatDate = (dateString) => {
     if (!dateString) return "Not selected";
@@ -131,7 +133,7 @@ const OrderSummaryModal = ({
                       {selectedVariation?.pricing_type_str}
                     </Text>
                   </View>
-                  <Text style={styles.pricingAmount}>₹{basePrice.toFixed(2)}</Text>
+                  <Text style={styles.pricingAmount}>₹{basePrice.toFixed(2)} {quantity > 1 && ` × ${quantity} = ₹${(basePrice * quantity).toFixed(2)}`}</Text>
                 </View>
                 
                 <View style={styles.pricingRow}>

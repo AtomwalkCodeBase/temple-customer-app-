@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
 import {
   Dimensions,
   Image,
@@ -19,18 +20,128 @@ const ServiceDetails = ({
   setModalVisible, 
   handleVariationSelect 
 }) => {
+  const [selectedVariation, setSelectedVariation] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+
+  const isEventService = selectedService?.service_type === 'EVENT';
+
+  const handleVariationToggle = (variation) => {
+  if (isEventService) {
+    setSelectedVariation(variation);
+  } else {
+    if (selectedVariation?.id === variation.id) {
+      setSelectedVariation(null);
+      setQuantity(1);
+    } else {
+      setSelectedVariation(variation);
+      setQuantity(1);
+    }
+  }
+};
+
+const handleQuantityChange = (change) => {
+  const newQuantity = quantity + change;
+  const maxAllowed = 5;
+
+  if (newQuantity > maxAllowed) return;
+
+  if (newQuantity <= 0) {
+    // Deselect variation if quantity reaches 0
+    setSelectedVariation(null);
+    setQuantity(1); // reset quantity for next selection
+  } else {
+    setQuantity(newQuantity);
+  }
+};
+
+  const handleProceed = () => {
+    if (selectedVariation) {
+      // For event services, pass the quantity along with variation
+      const selection = isEventService 
+        ? { ...selectedVariation, quantity }
+        : selectedVariation;
+      
+      handleVariationSelect(selection);
+      setSelectedVariation(null); // Reset selection after proceeding
+      setQuantity(1); // Reset quantity after proceeding
+    }
+  };
+
+  const renderVariationSelector = (variation, isSelected) => {
+    if (isEventService && isSelected) {
+      // Show quantity selector for EVENT services when selected
+      return (
+        <View style={styles.quantitySelector}>
+          <TouchableOpacity 
+            style={styles.quantityButton}
+            onPress={() => handleQuantityChange(-1)}
+            disabled={quantity <= 0}
+          >
+            <Ionicons 
+              name="remove" 
+              size={20} 
+              color={quantity <= 1 ? "#CCC" : "#FFF"} 
+            />
+          </TouchableOpacity>
+          
+          <Text style={styles.quantityText}>{quantity}</Text>
+          
+          <TouchableOpacity 
+            style={styles.quantityButton}
+            onPress={() => handleQuantityChange(1)}
+            disabled={quantity >= 5}
+          >
+            <Ionicons 
+              name="add" 
+              size={20} 
+              color={quantity >= 5 ? "#CCC" : "#FFF"} 
+            />
+          </TouchableOpacity>
+        </View>
+      );
+    } else if (isSelected) {
+      // Show checkbox for HALL and PUJA services when selected
+      return (
+        <View style={styles.selectedIndicator}>
+          <View style={styles.checkbox}>
+            <Ionicons name="checkmark" size={16} color="#FFF" />
+          </View>
+        </View>
+      );
+    } else {
+      // Show select button when not selected
+      return (
+        <View style={styles.selectButton}>
+          <Text style={styles.selectButtonText}>Select</Text>
+          <Ionicons name="chevron-forward" size={16} color="#FFF" />
+        </View>
+      );
+    }
+  };
+
   return (
     <Modal
       visible={modalVisible}
       animationType="slide"
       transparent={true}
-      onRequestClose={() => setModalVisible(false)}
+      onRequestClose={() => {
+        setModalVisible(false);
+        setSelectedVariation(null); // Reset selection when modal closes
+        setQuantity(1); // Reset quantity when modal closes
+      }}
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContentFull} onPress={() => {}}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Service Details</Text>
-            <Pressable style={styles.closeButton} onPress={() => setModalVisible(false)}>
+            <Pressable 
+              style={styles.closeButton} 
+              onPress={() => {
+                setModalVisible(false);
+                setSelectedVariation(null);
+                setQuantity(1);
+              }}
+            >
               <Ionicons name="close" size={24} color="#666" />
             </Pressable>
           </View>
@@ -110,47 +221,62 @@ const ServiceDetails = ({
               </View>
 
               <Text style={styles.priceNote}>
-                Final price depends on the selected package and date/time availability.
+                {isEventService 
+                  ? 'Select quantity and proceed to booking.' 
+                  : 'Final price depends on the selected package and date/time availability.'
+                }
               </Text>
             </View>
 
             {/* Variations */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Select Service Variations</Text>
+              <Text style={styles.sectionTitle}>
+                {isEventService ? 'Select Tickets' : 'Select Service Variations'}
+              </Text>
               {(selectedService?.service_variation_list?.length > 0) ? (
-                selectedService.service_variation_list.map((variation) => (
-                  <TouchableOpacity
-                    key={variation.id}
-                    style={styles.variationItemContainer}
-                    activeOpacity={0.9}
-                    onPress={() => handleVariationSelect(variation)}
-                  >
-                    <View style={styles.variationContent}>
-                      <Text style={styles.variationName}>{variation.pricing_type_str}</Text>
-                      <Text style={styles.variationTime}>
-                        {variation.start_time} - {variation.end_time}
-                      </Text>
-                      <Text style={styles.variationCapacity}>
-                        Max {variation.max_participant} people • {variation.max_no_per_day} slots/day
-                      </Text>
-                    </View>
-                    <View style={styles.variationPrice}>
-                      <Text style={styles.variationPriceText}>
-                        ₹{parseFloat(variation.base_price).toFixed(2)}
-                      </Text>
-                      <View style={styles.selectButton}>
-                        <Text style={styles.selectButtonText}>Select</Text>
-                        <Ionicons name="chevron-forward" size={16} color="#FFF" />
+                selectedService.service_variation_list.map((variation) => {
+                  const isSelected = selectedVariation?.id === variation.id;
+                  
+                  return (
+                    <TouchableOpacity
+                      key={variation.id}
+                      style={[
+                        styles.variationItemContainer,
+                        isSelected && styles.variationItemSelected
+                      ]}
+                      activeOpacity={0.9}
+                      onPress={() => handleVariationToggle(variation)}
+                    >
+                      <View style={styles.variationContent}>
+                        <Text style={styles.variationName}>{variation.pricing_type_str}</Text>
+                        <Text style={styles.variationTime}>
+                          {variation.start_time} - {variation.end_time}
+                        </Text>
+                        <Text style={styles.variationCapacity}>
+                          Max {variation.max_participant} people • {variation.max_no_per_day} slots/day
+                        </Text>
+                        {isEventService && isSelected && (
+                          <Text style={styles.quantityLabel}>
+                            Quantity: {quantity}
+                          </Text>
+                        )}
                       </View>
-                    </View>
-                  </TouchableOpacity>
-
-                ))
+                      <View style={styles.variationPrice}>
+                        <Text style={styles.variationPriceText}>
+                          ₹{parseFloat(variation.base_price).toFixed(2)}
+                          {isEventService && isSelected && ` × ${quantity} = ₹${(parseFloat(variation.base_price) * quantity).toFixed(2)}`}
+                        </Text>
+                        
+                        {renderVariationSelector(variation, isSelected)}
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })
               ) : (
                 <View style={styles.emptyPackageContainer}>
                   <Ionicons name="cube-outline" size={48} color="#CCC" />
                   <Text style={styles.emptyPackageText}>
-                    Packages will be available soon for booking
+                    {isEventService ? 'Tickets will be available soon for booking' : 'Packages will be available soon for booking'}
                   </Text>
                 </View>
               )}
@@ -202,6 +328,22 @@ const ServiceDetails = ({
 
             <View style={{ height: 24 }} />
           </ScrollView>
+
+          {/* Proceed Button */}
+          {selectedVariation && (
+            <View style={styles.proceedButtonContainer}>
+              <TouchableOpacity 
+                style={styles.proceedButton}
+                onPress={handleProceed}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.proceedButtonText}>
+                  {isEventService ? `Book ${quantity} Ticket${quantity > 1 ? 's' : ''}` : 'Proceed with Booking'}
+                </Text>
+                <Ionicons name="arrow-forward" size={20} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </View>
     </Modal>
@@ -311,27 +453,24 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   variationItemContainer: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  backgroundColor: '#FFF',
-  padding: 20,
-  borderRadius: 18,
-  marginBottom: 16,
-
-  // Floating look
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.15,
-  shadowRadius: 6,
-  elevation: 6,
-},
-variationPriceText: {
-  fontSize: 18,
-  fontWeight: '700',
-  color: '#E88F14',
-},
-
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    padding: 20,
+    borderRadius: 18,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  variationItemSelected: {
+    borderWidth: 2,
+    borderColor: '#E88F14',
+    backgroundColor: '#FFFBF5',
+  },
   variationContent: {
     flex: 1,
   },
@@ -350,16 +489,20 @@ variationPriceText: {
     fontSize: 12,
     color: '#888',
   },
+  quantityLabel: {
+    fontSize: 14,
+    color: '#E88F14',
+    fontWeight: '600',
+    marginTop: 4,
+  },
   variationPrice: {
     alignItems: 'flex-end',
     gap: 8,
-    
   },
   variationPriceText: {
     fontSize: 18,
     fontWeight: '700',
     color: '#E88F14',
-
   },
   selectButton: {
     flexDirection: 'row',
@@ -369,7 +512,6 @@ variationPriceText: {
     paddingVertical: 6,
     borderRadius: 20,
     gap: 4,
-    // Button shadow
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -383,6 +525,43 @@ variationPriceText: {
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '700',
+  },
+  selectedIndicator: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkbox: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#E88F14',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#E88F14',
+  },
+  quantitySelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E88F14',
+    borderRadius: 20,
+    padding: 4,
+    gap: 8,
+  },
+  quantityButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quantityText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    minWidth: 20,
+    textAlign: 'center',
   },
   emptyPackageContainer: {
     flex: 1,
@@ -417,6 +596,36 @@ variationPriceText: {
     fontSize: 14,
     color: '#4B5563',
     lineHeight: 20,
+  },
+  proceedButtonContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#EEE',
+    backgroundColor: '#FFF',
+  },
+  proceedButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E88F14',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  proceedButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
 
