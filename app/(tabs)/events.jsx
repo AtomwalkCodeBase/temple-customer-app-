@@ -1,5 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -14,7 +12,7 @@ import {
 import Cards from "../../components/Cards";
 import Header from '../../components/Header';
 import ToastMsg from '../../components/ToastMsg';
-import { getBookingList, getPaymentStatus, getTempleServiceList, processBooking } from '../../services/productService';
+import { getBookingList, getTempleServiceList } from '../../services/productService';
 import CalendarModal from '../modals/CalendarModal';
 import OrderSummaryModal from '../modals/OrderSummaryModal';
 import PaymentOptionsModal from '../modals/PaymentOptionsModal';
@@ -302,68 +300,6 @@ const BookServicesScreen = () => {
     }
   };
 
-  const navigation = useNavigation();
-
-  const checkPaymentStatus = async (refCode) => {
-    try {
-      const response = await getPaymentStatus(refCode);
-      
-      if (response.status === 200 && response.data) {
-        const paymentStatus = response.data.payment?.status;
-        
-        switch (paymentStatus) {
-          case 'S': // Success
-            setPaymentStatus('success');
-            ToastMsg('Payment successful! Booking confirmed.', 'success');
-            break;
-          case 'F': // Failed
-            setPaymentStatus('failed');
-            // Cancel the booking since payment failed
-            await cancelBooking(refCode);
-            ToastMsg('Payment failed. Booking cancelled.', 'error');
-            break;
-          case 'P': // Processing
-            setPaymentStatus('processing');
-            // Cancel the booking since payment is still processing
-            await cancelBooking(refCode);
-            ToastMsg('Payment is still processing. Please try again.', 'warning');
-            break;
-          default:
-            setPaymentStatus('failed');
-            await cancelBooking(refCode);
-            ToastMsg('Payment status unknown. Please contact support.', 'error');
-            break;
-        }
-      } else {
-        setPaymentStatus('failed');
-        await cancelBooking(refCode);
-        ToastMsg('Failed to verify payment status.', 'error');
-      }
-    } catch (error) {
-      console.error('Error checking payment status:', error);
-      setPaymentStatus('failed');
-      await cancelBooking(refCode);
-      ToastMsg('Error verifying payment. Please contact support.', 'error');
-    } finally {
-      setPaymentStatusVisible(true);
-    }
-  };
-
-  const cancelBooking = async (refCode) => {
-    try {
-      const customer_refcode = await AsyncStorage.getItem('ref_code');
-      const cancelData = {
-        cust_ref_code: customer_refcode,
-        call_mode: "CANCEL_BOOKING",
-        booking_ref_code: refCode,
-        cancel_reason: "Payment failed or processing"
-      };
-      await processBooking(cancelData);
-    } catch (error) {
-      console.error('Error cancelling booking:', error);
-    }
-  };
-
   const handleProceedToPayment = () => {
     setOrderSummaryVisible(false);
     setPaymentModalVisible(true);
@@ -399,40 +335,10 @@ const BookServicesScreen = () => {
     return `₹${parseFloat(price).toFixed(2)}`;
   };
 
-  const formatDateForAPI = (dateString) => {
-    const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, '0');
-    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", 
-                    "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-    const month = months[date.getMonth()];
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  };
-
   const confirmDate = async () => {
     setCalendarModalVisible(false);
     setOrderSummaryVisible(true);
   };
-
-  const VariationItem = ({ variation }) => (
-    <TouchableOpacity 
-      style={styles.variationItemContainer}
-      onPress={() => handleVariationSelect(variation)}
-    >
-      <View style={styles.variationContent}>
-        <Text style={styles.variationName}>{variation.pricing_type_str}</Text>
-        <Text style={styles.variationTime}>
-          {variation.start_time} - {variation.end_time}
-        </Text>
-        <Text style={styles.variationCapacity}>
-          Max {variation.max_participant} people • {variation.max_no_per_day} slots/day
-        </Text>
-      </View>
-      <View style={styles.variationPrice}>
-        <Text style={styles.variationPriceText}>{formatPrice(variation.base_price)}</Text>
-      </View>
-    </TouchableOpacity>
-  );
 
   const renderServiceItem = ({ item }) => {
     const minPrice = item.service_variation_list?.length > 0 
@@ -816,15 +722,6 @@ const styles = StyleSheet.create({
     color: '#6C63FF',
     paddingHorizontal: 20,
     paddingVertical: 10,
-  },
-  variationItemContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    padding: 20,
-    borderRadius: 15,
-    marginBottom: 12,
   },
   variationContent: {
     flex: 1,

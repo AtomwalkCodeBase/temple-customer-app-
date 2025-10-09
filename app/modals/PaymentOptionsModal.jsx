@@ -162,8 +162,6 @@ const PaymentOptionsModal = ({
   }
 };
 
-
-
   // Pricing calculation
   const basePrice = parseFloat(selectedVariation?.base_price || 0);
   const discount = 0;

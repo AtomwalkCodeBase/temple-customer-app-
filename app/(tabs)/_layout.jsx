@@ -3,7 +3,6 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Tabs } from 'expo-router';
 import { Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ToastMsg from '../../components/ToastMsg';
 
 export default function TabLayout() {
   return (
@@ -53,7 +52,6 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-      <ToastMsg/>
     </SafeAreaView>
   );
 }

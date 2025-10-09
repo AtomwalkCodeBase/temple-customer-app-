@@ -37,12 +37,12 @@ export default function ResetPin() {
       if (res?.status === 200) {
         ToastMsg("PIN updated successfully", "success");
         await AsyncStorage.setItem("userPin", newPin);
-        router.back();
+        setTimeout(() => router.back(), 1500);
       } else {
-        setError(res?.message || "Could not update PIN");
+        ToastMsg("Unable to update PIN"," Please verify your current PIN and try again.", "error");
       }
     } catch (err) {
-      setError(err.message || "An error occurred");
+      ToastMsg("Unable to update PIN"," Please verify your current PIN and try again.", "error");
     } finally {
       setLoading(false);
     }

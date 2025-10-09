@@ -67,7 +67,7 @@ export function getPanchangData(region, odiaType = null, year = null, month = nu
 
 export const getPaymentStatus = async (refCode) => {
     try {
-        const data = { ref_code: refCode, force_status: "S" };  // 
+        const data = { ref_code: refCode };  // , force_status: "S"
         const response = await authAxiosPost(process_booking_payment, data);
         return response;
     } catch (err) {

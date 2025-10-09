@@ -1,5 +1,7 @@
 import { Stack } from "expo-router";
 import { StyleSheet, View } from "react-native";
+import Toast from "react-native-toast-message";
+
 
 export default function RootLayout() {
   return (
@@ -18,6 +20,7 @@ export default function RootLayout() {
         <Stack.Screen name="screens/Register" />
         <Stack.Screen name="screens/Reset-pin" />
       </Stack>
+      <Toast/>
     </View>
   );
 }
