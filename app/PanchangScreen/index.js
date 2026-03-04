@@ -25,24 +25,24 @@ const PanchangScreen = () => {
   const [region, setRegion] = useState('odisha');
   const [calendarType, setCalendarType] = useState('jagannath_panji');
   const [modalVisible, setModalVisible] = useState(false);
-   const [headerTitle, setHeaderTitle] = useState('Panchang');
+  const [headerTitle, setHeaderTitle] = useState('Panchang');
   const router = useRouter();
 
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   // Use focus effect to refresh data when screen comes into focus
-   useFocusEffect(
+  useFocusEffect(
     useCallback(() => {
       // Load preferences and check if they've changed
       const checkAndRefreshPreferences = async () => {
         try {
           const storedRegion = await AsyncStorage.getItem('userRegion');
           const storedCalendarType = await AsyncStorage.getItem('calendarType');
-          
+
           // Check if preferences have changed
           const regionChanged = storedRegion && storedRegion !== region;
           const calendarTypeChanged = storedCalendarType && storedCalendarType !== calendarType;
-          
+
           if (regionChanged || calendarTypeChanged) {
             // Update state with new preferences
             if (storedRegion) {
@@ -51,7 +51,7 @@ const PanchangScreen = () => {
               setHeaderTitle(getRegionTitle(storedRegion, 'local'));
             }
             if (storedCalendarType) setCalendarType(storedCalendarType);
-            
+
             // Reset and reload data
             setAllPanchangData({});
             setLoading(true);
@@ -60,7 +60,7 @@ const PanchangScreen = () => {
           console.error('Error checking preferences:', error);
         }
       };
-      
+
       checkAndRefreshPreferences();
     }, [region, calendarType])
   );
@@ -85,7 +85,7 @@ const PanchangScreen = () => {
     try {
       const storedRegion = await AsyncStorage.getItem('userRegion');
       const storedCalendarType = await AsyncStorage.getItem('calendarType');
-      
+
       if (storedRegion) {
         setRegion(storedRegion);
         // Set header title based on region
@@ -149,17 +149,17 @@ const PanchangScreen = () => {
     try {
       const month = currentMonth.getMonth();
       const year = currentMonth.getFullYear();
-      
+
       const festivals = [];
-      
+
       Object.entries(allPanchangData).forEach(([dateString, data]) => {
         const [yearStr, monthStr, dayStr] = dateString.split('-');
         const date = new Date(parseInt(yearStr), parseInt(monthStr) - 1, parseInt(dayStr));
-        
+
         if (date.getMonth() === month && date.getFullYear() === year) {
           if (data.festivals && Array.isArray(data.festivals) && data.festivals.length > 0) {
             const festivalNames = data.festivals.join(', ');
-            
+
             festivals.push({
               date: dateString,
               day: date.getDate(),
@@ -169,7 +169,7 @@ const PanchangScreen = () => {
           }
         }
       });
-      
+
       festivals.sort((a, b) => new Date(a.date) - new Date(b.date));
       setMonthlyFestivals(festivals);
     } catch (error) {
@@ -186,15 +186,15 @@ const PanchangScreen = () => {
   const onDatePress = (day) => {
     const dateString = formatDateToAPIString(day.date);
     const dateData = allPanchangData[dateString];
-    
+
     setSelectedDate(day.date);
-    
+
     if (dateData) {
       setPanchangData(dateData);
     } else {
       setPanchangData(null);
     }
-    
+
     setModalVisible(true);
   };
 
@@ -223,8 +223,8 @@ const PanchangScreen = () => {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.statusBarBackground} />
       <StatusBar style="light" />
-      
-     <HeaderComponent 
+
+      <HeaderComponent
         headerTitle={headerTitle} // Use the dynamic title
         onBackPress={handleBackPress}
         icon2Name={"refresh"}
@@ -232,7 +232,7 @@ const PanchangScreen = () => {
         icon1Name={"settings"}
         icon1OnPress={navigateToSettings}
       />
-      
+
       {loading ? (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#E88F14" />
@@ -240,11 +240,11 @@ const PanchangScreen = () => {
         </View>
       ) : (
         <ScrollView style={styles.content}>
-          <MonthNavigation 
-            currentMonth={currentMonth} 
-            onNavigateMonth={navigateMonth} 
+          <MonthNavigation
+            currentMonth={currentMonth}
+            onNavigateMonth={navigateMonth}
           />
-          
+
           <CalendarGrid
             currentMonth={currentMonth}
             selectedDate={selectedDate}
@@ -253,7 +253,7 @@ const PanchangScreen = () => {
             onDatePress={onDatePress}
             formatDateToAPIString={formatDateToAPIString}
           />
-          
+
           <FestivalsList
             festivals={monthlyFestivals}
             allPanchangData={allPanchangData}

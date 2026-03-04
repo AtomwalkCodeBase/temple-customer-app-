@@ -5,7 +5,7 @@ import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'r
 const Header = ({ 
   type = 'type1', 
   // Type 1 props
-  userName = "Vishnuvardhan", 
+  userName = "Ashutosh", 
   userId, 
   // Type 2 props
   title = "🔔 Sacred Temples",

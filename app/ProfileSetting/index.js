@@ -22,13 +22,14 @@ const SettingsScreen = () => {
     { id: 'kerala', name: 'Kerala', calendarTypes: ['default'] },
     { id: 'westbengal', name: 'West Bengal', calendarTypes: ['default'] },
     { id: 'gujarat', name: 'Gujarat', calendarTypes: ['default'] },
-    { 
-      id: 'odisha', 
-      name: 'Odisha', 
+    {
+      id: 'odisha',
+      name: 'Odisha',
       calendarTypes: [
+        { id: 'calender', name: 'Calender' },
         { id: 'jagannath_panji', name: 'Jagannath Panji' },
         { id: 'biraja_panji', name: 'Biraja Panji' }
-      ] 
+      ]
     },
   ];
 
@@ -40,7 +41,7 @@ const SettingsScreen = () => {
     try {
       const storedRegion = await AsyncStorage.getItem('userRegion');
       const storedCalendarType = await AsyncStorage.getItem('calendarType');
-      
+
       if (storedRegion) setSelectedRegion(storedRegion);
       if (storedCalendarType) setSelectedCalendarType(storedCalendarType);
     } catch (error) {
@@ -52,12 +53,12 @@ const SettingsScreen = () => {
     try {
       await AsyncStorage.setItem('userRegion', selectedRegion);
       await AsyncStorage.setItem('calendarType', selectedCalendarType);
-      
+
       Toast.show({
         type: 'success',
         text1: 'Preferences saved successfully!',
       });
-      
+
       router.back();
     } catch (error) {
       Toast.show({
@@ -80,14 +81,14 @@ const SettingsScreen = () => {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.statusBarBackground} />
       <StatusBar style="light" />
-      <HeaderComponent 
-        headerTitle="Settings" 
+      <HeaderComponent
+        headerTitle="Settings"
         onBackPress={handleBackPress}
       />
-      
+
       <ScrollView style={styles.content}>
         <Text style={styles.sectionTitle}>Select Your Region</Text>
-        
+
         <View style={styles.optionsContainer}>
           {regions.map(region => (
             <TouchableOpacity
@@ -124,12 +125,12 @@ const SettingsScreen = () => {
         {getCalendarTypesForRegion(selectedRegion).length > 0 && (
           <>
             <Text style={styles.sectionTitle}>Select Calendar Type</Text>
-            
+
             <View style={styles.optionsContainer}>
               {getCalendarTypesForRegion(selectedRegion).map(type => {
                 const typeId = typeof type === 'object' ? type.id : type;
                 const typeName = typeof type === 'object' ? type.name : 'Default';
-                
+
                 return (
                   <TouchableOpacity
                     key={typeId}
@@ -155,7 +156,7 @@ const SettingsScreen = () => {
           </>
         )}
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.saveButton}
           onPress={savePreferences}
         >
