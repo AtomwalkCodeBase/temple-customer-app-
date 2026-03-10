@@ -13,6 +13,7 @@
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
     "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-native-community/datetimepicker": "^8.6.0",
     "@react-native-masked-view/masked-view": "^0.3.2",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
@@ -21,6 +22,7 @@
     "dayjs": "^1.11.18",
     "expo": "~53.0.22",
     "expo-blur": "~14.1.5",
+    "expo-calendar": "^15.0.8",
     "expo-constants": "~17.1.7",
     "expo-font": "~13.3.2",
     "expo-haptics": "~14.1.4",
@@ -28,7 +30,9 @@
     "expo-linear-gradient": "^14.1.5",
     "expo-linking": "~7.1.7",
     "expo-local-authentication": "~16.0.5",
+    "expo-location": "^55.1.2",
     "expo-media-library": "^18.1.1",
+    "expo-notifications": "^55.0.11",
     "expo-router": "~5.1.5",
     "expo-sharing": "^14.0.7",
     "expo-splash-screen": "~0.30.10",
@@ -50,7 +54,8 @@
     "react-native-toast-message": "^2.3.3",
     "react-native-web": "~0.20.0",
     "react-native-webview": "13.13.5",
-    "styled-components": "^6.1.19"
+    "styled-components": "^6.1.19",
+    "suncalc": "^1.9.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

@@ -12,7 +12,7 @@ import {
   Switch,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 
 const { width } = Dimensions.get("window");
@@ -33,7 +33,7 @@ export default function Profile() {
         if (storedRef) setUserRef(storedRef);
         setBiometricEnabled(storedBio === "true");
       })();
-    }, [])
+    }, []),
   );
 
   const handleLogout = async () => {
@@ -73,6 +73,9 @@ export default function Profile() {
   const handlePanchang = async () => {
     router.push("/PanchangScreen");
   };
+  const handletask = async () => {
+    router.push("/Tasks");
+  };
 
   const handleSetting = async () => {
     router.push("/ProfileSetting");
@@ -101,28 +104,34 @@ export default function Profile() {
       onPress: handleSetting,
       color: "#E88F14",
     },
-    {
-      icon: "calendar-outline",
-      label: "My Bookings",
-      onPress: handleMybookings,
-      color: "#4d88ff",
-    },
-    {
-      icon: "settings-outline",
-      label: "Account Settings",
-      onPress: () => {},
-      color: "#10b981",
-    },
+    // {
+    //   icon: "calendar-outline",
+    //   label: "My Bookings",
+    //   onPress: handleMybookings,
+    //   color: "#4d88ff",
+    // },
+    // {
+    //   icon: "settings-outline",
+    //   label: "Account Settings",
+    //   onPress: () => {},
+    //   color: "#10b981",
+    // },
     {
       icon: "help-circle-outline",
       label: "Help & Support",
       onPress: () => {},
       color: "#ef4444",
     },
+    {
+      icon: "calendar",
+      label: "Calnendar",
+      onPress: handlePanchang,
+      color: "#61ef44",
+    },
   ];
 
   return (
-    <ScrollView 
+    <ScrollView
       contentContainerStyle={styles.scrollContainer}
       showsVerticalScrollIndicator={false}
     >
@@ -147,7 +156,7 @@ export default function Profile() {
               <Ionicons name="checkmark-circle" size={20} color="#10b981" />
             </View>
           </View>
-          <Text style={styles.name}>Vishnuvardhan</Text>
+          <Text style={styles.name}>{userRef}</Text>
           <Text style={styles.subtext}>Reference: {userRef}</Text>
         </View>
       </LinearGradient>
@@ -159,7 +168,12 @@ export default function Profile() {
             onPress={item.onPress}
             activeOpacity={0.7}
           >
-            <View style={[styles.iconContainer, { backgroundColor: `${item.color}20` }]}>
+            <View
+              style={[
+                styles.iconContainer,
+                { backgroundColor: `${item.color}20` },
+              ]}
+            >
               <Ionicons name={item.icon} size={24} color={item.color} />
             </View>
             <Text style={styles.menuLabel}>{item.label}</Text>
@@ -171,16 +185,20 @@ export default function Profile() {
       {/* Security Section */}
       <View style={styles.securityCard}>
         <Text style={styles.sectionTitle}>Security</Text>
-        
+
         {/* Biometric Toggle */}
         <View style={styles.securityItem}>
           <View style={styles.securityLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: "#E88F1420" }]}>
+            <View
+              style={[styles.iconContainer, { backgroundColor: "#E88F1420" }]}
+            >
               <Ionicons name="finger-print" size={24} color="#E88F14" />
             </View>
             <View>
               <Text style={styles.securityLabel}>Fingerprint Login</Text>
-              <Text style={styles.securityDescription}>Use biometrics for faster access</Text>
+              <Text style={styles.securityDescription}>
+                Use biometrics for faster access
+              </Text>
             </View>
           </View>
           <Switch
@@ -192,13 +210,15 @@ export default function Profile() {
         </View>
 
         {/* Update PIN Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.pinButton}
           onPress={handleSetPin}
           activeOpacity={0.8}
         >
           <View style={styles.pinButtonLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: "#4d88ff20" }]}>
+            <View
+              style={[styles.iconContainer, { backgroundColor: "#4d88ff20" }]}
+            >
               <Feather name="lock" size={20} color="#4d88ff" />
             </View>
             <Text style={styles.pinButtonText}>Update PIN</Text>
@@ -208,7 +228,7 @@ export default function Profile() {
       </View>
 
       {/* Logout Button */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.logoutButton}
         onPress={handleLogout}
         activeOpacity={0.8}

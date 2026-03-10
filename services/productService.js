@@ -42,16 +42,16 @@ export function getPanchangData(region, odiaType = null, year = null, month = nu
     if (!year || !month) {
         const now = new Date();
         year = year || now.getFullYear();
-        month = month || now.getMonth(); // 0-indexed
+        month = month
     }
-
+    // console.log(year, month, region, odiaType);
     const monthName = new Date(year, month).toLocaleString('en-US', { month: 'long' }).toLowerCase();
 
     let url = `${GITHUB_PANCHANG_BASE_URL}/`;
-
     if (region.toLowerCase() === 'odisha') {
         odiaType = odiaType || 'jagannath_panji';
         url += `odisha/${odiaType}/${year}/${monthName}.json`;
+
     } else {
         url += `${region.toLowerCase()}/${year}/${monthName}.json`;
     }
@@ -59,7 +59,7 @@ export function getPanchangData(region, odiaType = null, year = null, month = nu
     return fetch(url)
         .then(response => {
             if (response.ok) return response.json();
-            throw new Error(`Failed to fetch Panchang data from ${url}`);
+            // throw new Error(`Failed to fetch Panchang data from ${url}`);
         })
         .then(data => ({ status: 200, data }))
         .catch(error => ({ status: 500, message: error.message }));

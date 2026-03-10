@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import SunCalc from "suncalc";
 
 // Constants
@@ -37,7 +38,6 @@ const PanchangDetailModal = ({
   const [localSunTimes, setLocalSunTimes] = useState(null);
   const [rahuKalam, setRahuKalam] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-
   // Memoized date key
   const dateKey = useMemo(
     () => selectedDate?.toDateString() || "",
@@ -233,10 +233,11 @@ const PanchangDetailModal = ({
 
         if (eventId) {
           await saveNotificationToStorage(eventId);
-          Alert.alert(
-            "Success",
-            "Event added to your calendar. You will receive notifications from your calendar app.",
-          );
+          Toast.show({
+            type: "success",
+            text1:
+              "Notification set successfully! Check your calendar for details.",
+          });
         } else {
           await saveNotificationToStorage();
           Alert.alert(

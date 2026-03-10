@@ -20,6 +20,7 @@ const SettingsScreen = () => {
     { id: 'maharashtra', name: 'Maharashtra', calendarTypes: ['default'] },
     { id: 'tamilnadu', name: 'Tamil Nadu', calendarTypes: ['default'] },
     { id: 'kerala', name: 'Kerala', calendarTypes: ['default'] },
+    { id: 'karnataka', name: 'Karnataka', calendarTypes: ['default'] },
     { id: 'westbengal', name: 'West Bengal', calendarTypes: ['default'] },
     { id: 'gujarat', name: 'Gujarat', calendarTypes: ['default'] },
     {

@@ -1,24 +1,28 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Tabs } from 'expo-router';
-import { Platform, StatusBar, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { Tabs } from "expo-router";
+import { Platform, StatusBar, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TabLayout() {
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View style={styles.statusBarBackground} />
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar
+        barStyle="light-content"
+        translucent
+        backgroundColor="transparent"
+      />
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: '#e88f14',
+          tabBarActiveTintColor: "#e88f14",
         }}
       >
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Dashboard',
+            title: "Dashboard",
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="home" color={color} size={size} />
             ),
@@ -27,7 +31,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="events"
           options={{
-            title: 'Services',
+            title: "Services",
             tabBarIcon: ({ color, size }) => (
               <MaterialIcons name="event" color={color} size={size} />
             ),
@@ -36,16 +40,16 @@ export default function TabLayout() {
         <Tabs.Screen
           name="temples"
           options={{
-            title: 'Temples',
+            title: "Temples",
             tabBarIcon: ({ color, size }) => (
               <MaterialIcons name="temple-hindu" color={color} size={size} />
             ),
           }}
-        />        
+        />
         <Tabs.Screen
           name="profile"
           options={{
-            title: 'Profile',
+            title: "Profile",
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="person" color={color} size={size} />
             ),
@@ -58,13 +62,13 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f2f6f9',
+    backgroundColor: "#f2f6f9",
   },
   statusBarBackground: {
     height: Platform.OS === "android" ? StatusBar.currentHeight : 44,
-    backgroundColor: '#E88F14',
-    width: '100%',
-    position: 'absolute',
+    backgroundColor: "#E88F14",
+    width: "100%",
+    position: "absolute",
     top: 0,
     left: 0,
   },

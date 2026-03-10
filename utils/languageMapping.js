@@ -27,7 +27,7 @@ export const regionTitles = {
   },
   odisha: {
     en: 'Odia Panji',
-    local: 'ଓଡ଼ିଆ ପଞ୍ଚାଙ୍ଗ',
+    local: 'Calendar',
     language: 'Odia'
   }
 };
